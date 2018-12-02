@@ -14,7 +14,6 @@ import warnings
 
 from odl.discr import DiscreteLp
 from odl.operator import Operator
-from odl.space import FunctionSpace
 from odl.tomo.geometry import (
     Geometry, Parallel2dGeometry, Parallel3dAxisGeometry)
 from odl.space.weighting import ConstWeighting
@@ -212,7 +211,6 @@ class RayTransformBase(Operator):
         proj_space = kwargs.pop('proj_space', None)
         if proj_space is None:
             dtype = reco_space.dtype
-            proj_fspace = FunctionSpace(geometry.params, out_dtype=dtype)
 
             if not reco_space.is_weighted:
                 weighting = None
@@ -262,10 +260,11 @@ class RayTransformBase(Operator):
             else:
                 axis_labels = angle_labels + det_labels
 
-            proj_interp = kwargs.get('interp', 'nearest')
             proj_space = DiscreteLp(
-                proj_fspace, geometry.partition, proj_tspace,
-                interp=proj_interp, axis_labels=axis_labels)
+                geometry.partition,
+                proj_tspace,
+                axis_labels=axis_labels
+            )
 
         else:
             # proj_space was given, checking some stuff

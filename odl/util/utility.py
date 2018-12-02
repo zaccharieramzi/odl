@@ -14,7 +14,6 @@ import inspect
 import sys
 from builtins import object
 from collections import OrderedDict
-from functools import wraps
 from future.moves.itertools import zip_longest
 from itertools import product
 
@@ -568,84 +567,6 @@ def conj_exponent(exp):
         return 1.0
     else:
         return exp / (exp - 1.0)
-
-
-def preload_first_arg(instance, mode):
-    """Decorator to preload the first argument of a call method.
-
-    Parameters
-    ----------
-    instance :
-        Class instance to preload the call with
-    mode : {'out-of-place', 'in-place'}
-
-        'out-of-place': call is out-of-place -- ``f(x, **kwargs)``
-
-        'in-place': call is in-place -- ``f(x, out, **kwargs)``
-
-    Notes
-    -----
-    The decorated function has the signature according to ``mode``.
-
-    Examples
-    --------
-    Define two functions which need some instance to act on and decorate
-    them manually:
-
-    >>> class A(object):
-    ...     '''My name is A.'''
-    >>> a = A()
-    ...
-    >>> def f_oop(inst, x):
-    ...     print(inst.__doc__)
-    ...
-    >>> def f_ip(inst, out, x):
-    ...     print(inst.__doc__)
-    ...
-    >>> f_oop_new = preload_first_arg(a, 'out-of-place')(f_oop)
-    >>> f_ip_new = preload_first_arg(a, 'in-place')(f_ip)
-    ...
-    >>> f_oop_new(0)
-    My name is A.
-    >>> f_ip_new(0, out=1)
-    My name is A.
-
-    Decorate upon definition:
-
-    >>> @preload_first_arg(a, 'out-of-place')
-    ... def set_x(obj, x):
-    ...     '''Function to set x in ``obj`` to a given value.'''
-    ...     obj.x = x
-    >>> set_x(0)
-    >>> a.x
-    0
-
-    The function's name and docstring are preserved:
-
-    >>> set_x.__name__
-    'set_x'
-    >>> set_x.__doc__
-    'Function to set x in ``obj`` to a given value.'
-    """
-
-    def decorator(call):
-
-        @wraps(call)
-        def oop_wrapper(x, **kwargs):
-            return call(instance, x, **kwargs)
-
-        @wraps(call)
-        def ip_wrapper(x, out, **kwargs):
-            return call(instance, x, out, **kwargs)
-
-        if mode == 'out-of-place':
-            return oop_wrapper
-        elif mode == 'in-place':
-            return ip_wrapper
-        else:
-            raise ValueError('bad mode {!r}'.format(mode))
-
-    return decorator
 
 
 class writable_array(object):

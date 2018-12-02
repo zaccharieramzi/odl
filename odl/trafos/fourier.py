@@ -11,7 +11,7 @@
 from __future__ import print_function, division, absolute_import
 import numpy as np
 
-from odl.discr import DiscreteLp, discr_sequence_space
+from odl.discr import DiscreteLp, uniform_discr
 from odl.operator import Operator
 from odl.set import RealNumbers, ComplexNumbers
 from odl.trafos.backends.pyfftw_bindings import (
@@ -123,9 +123,11 @@ class DiscreteFourierTransformBase(Operator):
         if range is None:
             impl = domain.tspace.impl
 
-            range = discr_sequence_space(
-                ran_shape, ran_dtype, impl,
-                exponent=conj_exponent(domain.exponent))
+            shape = np.atleast_1d(ran_shape)
+            range = uniform_discr(
+                [0] * len(shape), shape - 1, shape, ran_dtype, impl,
+                nodes_on_bdry=True, exponent=conj_exponent(domain.exponent))
+
         else:
             if range.shape != ran_shape:
                 raise ValueError('expected range shape {}, got {}.'

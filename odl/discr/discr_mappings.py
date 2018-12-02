@@ -6,617 +6,318 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file, You can
 # obtain one at https://mozilla.org/MPL/2.0/.
 
-"""Mappings between abstract (continuous) and discrete sets.
-
-Includes grid evaluation (collocation) and various interpolation
-operators.
-"""
+"""Discretization of functions and interpolation of discrete arrays."""
 
 from __future__ import print_function, division, absolute_import
 from builtins import object
 from itertools import product
 import numpy as np
 
-from odl.operator import Operator
-from odl.discr.partition import RectPartition
-from odl.space.base_tensors import TensorSpace
-from odl.space import FunctionSpace
 from odl.util import (
     is_valid_input_meshgrid, out_shape_from_array, out_shape_from_meshgrid,
-    is_string, is_numeric_dtype, signature_string, indent, dtype_repr,
-    writable_array)
+    is_string,
+)
 
 
-__all__ = ('FunctionSpaceMapping',
-           'PointCollocation', 'NearestInterpolation', 'LinearInterpolation',
-           'PerAxisInterpolation')
+__all__ = (
+    'point_collocation',
+    'nearest_interpolator',
+    'linear_interpolator',
+    'per_axis_interpolator'
+)
 
 _SUPPORTED_INTERP_SCHEMES = ['nearest', 'linear']
 
 
-class FunctionSpaceMapping(Operator):
+def point_collocation(func, meshgrid, out=None, **kwargs):
+    """Sample a function on a grid of points.
 
-    """Abstract base class for function set discretization mappings."""
+    This function represents the simplest way of discretizing a function.
+    It does little more than calling the function on a sparse meshgrid
+    and returning the result.
 
-    def __init__(self, map_type, fspace, partition, tspace, linear=False):
-        """Initialize a new instance.
+    Parameters
+    ----------
+    func : callable
+        Function to be sampled. It must be vectorized, i.e., it must support
+        evaluation with a (sparse) meshgrid of points. Optionally, the ``func``
+        can accept an optional `numpy.ndarray` as ``out`` argument to which
+        results can be written.
+    meshgrid : TODO
+        TODO
+    out : numpy.ndarray
+        TODO
+    kwargs :
+        Additional arguments that are passed on to ``func``.
 
-        Parameters
-        ----------
-        map_type : {'sampling', 'interpolation'}
-            The type of operator
-        fspace : `FunctionSpace`
-            The non-discretized (abstract) set of functions to be
-            discretized
-        partition : `RectPartition`
-            Partition of (a subset of) ``fspace.domain`` based on a
-            `RectGrid`.
-        tspace : `TensorSpace`
-            Space providing containers for the values/coefficients of a
-            discretized object. Its `TensorSpace.shape` must be equal
-            to ``partition.shape``.
-        linear : bool, optional
-            Create a linear operator if ``True``, otherwise a non-linear
-            operator.
-        """
-        map_type, map_type_in = str(map_type).lower(), map_type
-        if map_type not in ('sampling', 'interpolation'):
-            raise ValueError('`map_type` {!r} not understood'
-                             ''.format(map_type_in))
-        if not isinstance(fspace, FunctionSpace):
-            raise TypeError('`fspace` {!r} is not a `FunctionSpace` '
-                            'instance'.format(fspace))
+    Examples
+    --------
+    Sample a 1D function:
 
-        if not isinstance(partition, RectPartition):
-            raise TypeError('`partition` {!r} is not a `RectPartition` '
-                            'instance'.format(partition))
-        if not isinstance(tspace, TensorSpace):
-            raise TypeError('`tspace` {!r} is not a `TensorSpace` instance'
-                            ''.format(tspace))
+    >>> mesh = np.meshgrid([1, 2, 3])
+    >>> point_collocation(lambda x: x ** 2, mesh)
 
-        if not fspace.domain.contains_set(partition):
-            raise ValueError('{} not contained in the domain {} '
-                             'of the function set {}'
-                             ''.format(partition, fspace.domain, fspace))
+    In two or more dimensions, the function to be sampled can be written as
+    if its arguments were the components of a point, and an implicit loop
+    around the call would iterate over all points:
 
-        if tspace.shape != partition.shape:
-            raise ValueError('`tspace.shape` not equal to `partition.shape`: '
-                             '{} != {}'
-                             ''.format(tspace.shape, partition.shape))
+    >>> xs = [1, 2]
+    >>> ys = [3, 4, 5]
+    >>> mesh = np.meshgrid(xs, ys, sparse=True)
+    >>> point_collocation(lambda x: x[0] - x[1], mesh)
 
-        domain = fspace if map_type == 'sampling' else tspace
-        range = tspace if map_type == 'sampling' else fspace
-        super(FunctionSpaceMapping, self).__init__(
-            domain, range, linear=linear)
-        self.__partition = partition
+    It is possible to use parametric functions and pass the parameters
+    during operator call:
 
-        if self.is_linear:
-            if self.domain.field is None:
-                raise TypeError('`fspace.field` cannot be `None` for '
-                                '`linear=True`')
-            if not is_numeric_dtype(tspace.dtype):
-                raise TypeError('`tspace.dtype` must be a numeric data type '
-                                'for `linear=True`, got {}'
-                                ''.format(dtype_repr(tspace)))
-            if fspace.field != tspace.field:
-                raise ValueError('`fspace.field` not equal to `tspace.field`: '
-                                 '{} != {}'
-                                 ''.format(fspace.field, tspace.field))
+    >>> def plus_c(x, c=0):
+    ...     return x[0] - x[1] + c
+    >>> coll_op(plus_c)  # uses default c = 0
+    rn((2, 3)).element(
+        [[-2., -3., -4.],
+         [-1., -2., -3.]]
+    )
+    >>> coll_op(plus_c, c=2)
+    rn((2, 3)).element(
+        [[ 0., -1., -2.],
+         [ 1.,  0., -1.]]
+    )
 
-    def __eq__(self, other):
-        """Return ``self == other``."""
-        if self is other:
-            return True
-        else:
-            return (type(other) is type(self) and
-                    self.domain == other.domain and
-                    self.range == other.range and
-                    self.partition == other.partition)
+    Notes
+    -----
+    This operator expects its input functions to be written in a
+    vectorization-conforming manner to ensure fast evaluation.
+    See the `ODL vectorization guide`_ for a detailed introduction.
 
-    def __hash__(self):
-        """Return ``hash(self)``."""
-        return hash((type(self), self.domain, self.range, self.partition))
+    See Also
+    --------
+    odl.discr.grid.RectGrid.meshgrid
+    numpy.meshgrid
 
-    @property
-    def partition(self):
-        """Underlying domain partition."""
-        return self.__partition
-
-    @property
-    def grid(self):
-        """Sampling grid."""
-        return self.partition.grid
-
-
-class PointCollocation(FunctionSpaceMapping):
-
-    """Function evaluation at grid points.
-
-    This operator evaluates a given function in a set of points. These
-    points are given as the sampling grid of a partition of the
-    function domain. The result of this evaluation is an array of
-    function values at these points.
-
-    If, for example, a function is defined on the interval [0, 1],
-    and a partition divides the interval into ``N`` subintervals,
-    the resulting array will have length ``N``. The sampling points
-    are defined by the partition, usually they are the midpoints
-    of the subintervals.
-
-    In higher dimensions, the same principle is applied, with the
-    only difference being the additional information about the ordering
-    of the axes in the flat storage array (C- vs. Fortran ordering).
-
-    This operator is the default `DiscretizedSpace.sampling` used by all
-    core discretization classes.
+    References
+    ----------
+    .. _ODL vectorization guide:
+       https://odlgroup.github.io/odl/guide/in_depth/vectorization_guide.html
     """
-
-    def __init__(self, fspace, partition, tspace):
-        """Initialize a new instance.
-
-        Parameters
-        ----------
-        fspace : `FunctionSpace`
-            Non-discretized (abstract) set of functions to be
-            discretized. ``fspace.domain`` must provide a
-            `Set.contains_set` method.
-        partition : `RectPartition`
-            Partition of (a subset of) ``fspace.domain`` based on a
-            `RectGrid`.
-        tspace : `TensorSpace`
-            Space providing containers for the values/coefficients of a
-            discretized object. Its `TensorSpace.shape` must be equal
-            to ``partition.shape``.
-
-        Examples
-        --------
-        Define a set of functions from the rectangle [1, 3] x [2, 5]
-        to the real numbers:
-
-        >>> rect = odl.IntervalProd([1, 3], [2, 5])
-        >>> fspace = odl.FunctionSpace(rect)
-
-        Partition the rectangle by a rectilinear grid:
-
-        >>> rect = odl.IntervalProd([1, 3], [2, 5])
-        >>> grid = odl.RectGrid([1, 2], [3, 4, 5])
-        >>> partition = odl.RectPartition(rect, grid)
-        >>> tspace = odl.rn(grid.shape)
-
-        Finally create the operator and test it on a function:
-
-        >>> coll_op = PointCollocation(fspace, partition, tspace)
-        >>>
-        >>> # Properly vectorized function
-        >>> func_elem = fspace.element(lambda x: x[0] - x[1])
-        >>> coll_op(func_elem)
-        rn((2, 3)).element(
-            [[-2., -3., -4.],
-             [-1., -2., -3.]]
-        )
-
-        We can use a Python function directly without creating a
-        function space element:
-
-        >>> coll_op(lambda x: x[0] - x[1])
-        rn((2, 3)).element(
-            [[-2., -3., -4.],
-             [-1., -2., -3.]]
-        )
-
-        Broadcasting and ``out`` parameters are supported:
-
-        >>> out = tspace.element()
-        >>> result = coll_op(func_elem, out=out)
-        >>> result is out
-        True
-        >>> out
-        rn((2, 3)).element(
-            [[-2., -3., -4.],
-             [-1., -2., -3.]]
-        )
-
-        It is possible to use parametric functions and pass the parameters
-        during operator call:
-
-        >>> def plus_c(x, c=0):
-        ...     return x[0] - x[1] + c
-        >>> coll_op(plus_c)  # uses default c = 0
-        rn((2, 3)).element(
-            [[-2., -3., -4.],
-             [-1., -2., -3.]]
-        )
-        >>> coll_op(plus_c, c=2)
-        rn((2, 3)).element(
-            [[ 0., -1., -2.],
-             [ 1.,  0., -1.]]
-        )
-
-        Notes
-        -----
-        This operator expects its input functions to be written in
-        a vectorization-conforming manner to ensure fast evaluation.
-        See the `ODL vectorization guide`_ for a detailed introduction.
-
-        See Also
-        --------
-        odl.discr.grid.RectGrid.meshgrid
-        numpy.meshgrid
-
-        References
-        ----------
-        .. _ODL vectorization guide:
-           https://odlgroup.github.io/odl/guide/in_depth/\
-vectorization_guide.html
-        """
-        linear = getattr(fspace, 'field', None) is not None
-        super(PointCollocation, self).__init__(
-            'sampling', fspace, partition, tspace, linear)
-
-    def _call(self, func, out=None, **kwargs):
-        """Return ``self(func[, out, **kwargs])``."""
-        mesh = self.grid.meshgrid
-        if out is None:
-            out = func(mesh, **kwargs)
-        else:
-            with writable_array(out) as out_arr:
-                func(mesh, out=out_arr, **kwargs)
-        return out
-
-    def __repr__(self):
-        """Return ``repr(self)``."""
-        posargs = [self.range, self.grid, self.domain]
-        inner_str = signature_string(posargs, [],
-                                     sep=[',\n', ', ', ',\n'],
-                                     mod=['!r', ''])
-        return '{}(\n{}\n)'.format(self.__class__.__name__, indent(inner_str))
+    if out is None:
+        out = func(meshgrid, **kwargs)
+    else:
+        # TODO: wrap `func` if it doesn't support `out`
+        func(meshgrid, out=out, **kwargs)
+    return out
 
 
-class NearestInterpolation(FunctionSpaceMapping):
+# TODO: fix docs
+def nearest_interpolator(x, coord_vecs, variant='left'):
+    """Nearest neighbor interpolation.
 
-    """Nearest neighbor interpolation as an `Operator`.
+    Given points ``x[1] < x[2] < ... < x[N]``, and values ``f[1], ..., f[N]``,
+    nearest neighbor interpolation at ``x`` is defined as ::
 
-    Given points ``x1 < x2 < ... < xN``, and values ``f1, ..., fN``,
-    nearest neighbor interpolation at ``x`` is defined by::
-
-        I(x) = fj  with j such that |x - xj| is minimal.
+        I(x) = f[j]  with j such that |x - x[j]| is minimal.
 
     The ambiguity at the midpoints is resolved by preferring one of the
     neighbors. For higher dimensions, this rule is applied per
     component.
 
-    The nearest neighbor interpolation operator is defined as the
-    mapping from the values ``f1, ..., fN`` to the function ``I(x)``
-    (as a whole).
+    The returned interpolator is the function ``x -> I(x)``.
 
     In higher dimensions, this principle is applied per axis, the
     only difference being the additional information about the ordering
     of the axes in the flat storage array (C- vs. Fortran ordering).
+
+    Parameters
+    ----------
+    variant : {'left', 'right'}, optional
+        Behavior variant at the midpoint between neighbors.
+
+        - ``'left'``: favor left neighbor (default).
+        - ``'right'``: favor right neighbor.
+
+    Examples
+    --------
+    We test nearest neighbor interpolation with a non-scalar
+    data type in 2d:
+
+    >>> rect = odl.IntervalProd([0, 0], [1, 1])
+    >>> fspace = odl.FunctionSpace(rect, out_dtype='U1')
+
+    Partitioning the domain uniformly with no nodes on the boundary
+    (will shift the grid points):
+
+    >>> part = odl.uniform_partition_fromintv(rect, [4, 2])
+    >>> part.grid.coord_vectors
+    (array([ 0.125,  0.375,  0.625,  0.875]), array([ 0.25,  0.75]))
+
+    Now we initialize the operator and test it with some points:
+
+    >>> tspace = odl.tensor_space(part.shape, dtype='U1')
+    >>> interp_op = NearestInterpolation(fspace, part, tspace)
+    >>> values = np.array([['m', 'y'],
+    ...                    ['s', 't'],
+    ...                    ['r', 'i'],
+    ...                    ['n', 'g']])
+    >>> function = interp_op(values)
+    >>> print(function([0.3, 0.6]))  # closest to index (1, 1) -> 3
+    t
+    >>> out = np.empty(2, dtype='U1')
+    >>> pts = np.array([[0.3, 0.6],
+    ...                 [1.0, 1.0]])
+    >>> out = function(pts.T, out=out)  # returns original out
+    >>> all(out == ['t', 'g'])
+    True
+
+    See Also
+    --------
+    LinearInterpolation : (bi-/tri-/...)linear interpolation
+
+    Notes
+    -----
+    - **Important:** if called on a point array, the points are
+      assumed to be sorted in ascending order in each dimension
+      for efficiency reasons.
+    - Nearest neighbor interpolation is the only scheme which works
+      with data of non-numeric data type since it does not involve any
+      arithmetic operations on the values, in contrast to other
+      interpolation methods.
+    - The distinction between left and right variants is currently
+      made by changing ``<=`` to ``<`` at one place. This difference
+      may not be noticable in some situations due to rounding errors.
+
+    """
+    # TODO(kohr-h): pass reasonable options on to the interpolator
+    def nearest_interp(arg, out=None):
+        """Interpolating function with vectorization."""
+        if is_valid_input_meshgrid(arg, x.ndim):
+            input_type = 'meshgrid'
+        else:
+            input_type = 'array'
+
+        interpolator = _NearestInterpolator(
+            coord_vecs,
+            x,
+            variant=variant,
+            input_type=input_type
+        )
+
+        return interpolator(arg, out=out)
+
+    return nearest_interp
+
+
+# TODO: doc
+def linear_interpolator(x, coord_vecs):
     """
 
-    def __init__(self, fspace, partition, tspace, variant='left'):
-        """Initialize a new instance.
+    Parameters
+    ----------
+    x :
 
-        Parameters
-        ----------
-        fspace : `FunctionSpace`
-            Non-discretized (abstract) set of functions to be
-            discretized. ``fspace.domain`` must provide a
-            `Set.contains_set` method.
-        partition : `RectPartition`
-            Partition of (a subset of) ``fspace.domain`` based on a
-            spatial grid.
-        tspace : `TensorSpace`
-            Space providing containers for the values/coefficients of a
-            discretized object. Its `TensorSpace.shape` must be equal
-            to ``partition.shape``.
-        variant : {'left', 'right'}, optional
-            Behavior variant at the midpoint between neighbors.
+    coord_vecs :
 
-                ``'left'``: favor left neighbor (default)
-
-                ``'right'``: favor right neighbor
-
-        Examples
-        --------
-        We test nearest neighbor interpolation with a non-scalar
-        data type in 2d:
-
-        >>> rect = odl.IntervalProd([0, 0], [1, 1])
-        >>> fspace = odl.FunctionSpace(rect, out_dtype='U1')
-
-        Partitioning the domain uniformly with no nodes on the boundary
-        (will shift the grid points):
-
-        >>> part = odl.uniform_partition_fromintv(rect, [4, 2])
-        >>> part.grid.coord_vectors
-        (array([ 0.125,  0.375,  0.625,  0.875]), array([ 0.25,  0.75]))
-
-        Now we initialize the operator and test it with some points:
-
-        >>> tspace = odl.tensor_space(part.shape, dtype='U1')
-        >>> interp_op = NearestInterpolation(fspace, part, tspace)
-        >>> values = np.array([['m', 'y'],
-        ...                    ['s', 't'],
-        ...                    ['r', 'i'],
-        ...                    ['n', 'g']])
-        >>> function = interp_op(values)
-        >>> print(function([0.3, 0.6]))  # closest to index (1, 1) -> 3
-        t
-        >>> out = np.empty(2, dtype='U1')
-        >>> pts = np.array([[0.3, 0.6],
-        ...                 [1.0, 1.0]])
-        >>> out = function(pts.T, out=out)  # returns original out
-        >>> all(out == ['t', 'g'])
-        True
-
-        See Also
-        --------
-        LinearInterpolation : (bi-/tri-/...)linear interpolation
-
-        Notes
-        -----
-        - **Important:** if called on a point array, the points are
-          assumed to be sorted in ascending order in each dimension
-          for efficiency reasons.
-        - Nearest neighbor interpolation is the only scheme which works
-          with data of non-numeric data type since it does not involve any
-          arithmetic operations on the values, in contrast to other
-          interpolation methods.
-        - The distinction between left and right variants is currently
-          made by changing ``<=`` to ``<`` at one place. This difference
-          may not be noticable in some situations due to rounding errors.
-        """
-        linear = getattr(fspace, 'field', None) is not None
-        super(NearestInterpolation, self).__init__(
-            'interpolation', fspace, partition, tspace, linear)
-
-        self.__variant = str(variant).lower()
-        if self.variant not in ('left', 'right'):
-            raise ValueError("`variant` {!r} not understood".format(variant))
-
-    @property
-    def variant(self):
-        """The variant (left / right) of interpolation."""
-        return self.__variant
-
-    def _call(self, x, out=None):
-        """Return ``self(x[, out])``."""
-        # TODO: pass reasonable options on to the interpolator
-        def nearest(arg, out=None):
-            """Interpolating function with vectorization."""
-            if is_valid_input_meshgrid(arg, self.grid.ndim):
-                input_type = 'meshgrid'
-            else:
-                input_type = 'array'
-
-            interpolator = _NearestInterpolator(
-                self.grid.coord_vectors, x, variant=self.variant,
-                input_type=input_type)
-
-            return interpolator(arg, out=out)
-
-        return self.range.element(nearest, vectorized=True)
-
-    def __repr__(self):
-        """Return ``repr(self)``."""
-        posargs = [self.range, self.grid, self.domain]
-        optargs = [('variant', self.variant, 'left')]
-        inner_str = signature_string(posargs, optargs,
-                                     sep=[',\n', ', ', ',\n'],
-                                     mod=['!r', ''])
-        return '{}(\n{}\n)'.format(self.__class__.__name__, indent(inner_str))
-
-
-class LinearInterpolation(FunctionSpaceMapping):
-
-    """Linear interpolation interpolation as an `Operator`."""
-
-    def __init__(self, fspace, partition, tspace):
-        """Initialize a new instance.
-
-        Parameters
-        ----------
-        fspace : `FunctionSpace`
-            Non-discretized (abstract) space of functions to be
-            discretized. ``fspace.domain`` must provide a
-            `Set.contains_set` method.
-        partition : `RectPartition`
-            Partition of (a subset of) ``fspace.domain`` based on a
-            `RectGrid`
-        tspace : `TensorSpace`
-            Space providing containers for the values/coefficients of a
-            discretized object. Its `TensorSpace.shape` must be equal
-            to ``partition.shape``, and its `TensorSpace.field` must
-            match ``fspace.field``.
-        """
-        if getattr(fspace, 'field', None) is None:
-            raise TypeError('`fspace.field` cannot be `None`')
-        super(LinearInterpolation, self).__init__(
-            'interpolation', fspace, partition, tspace, linear=True)
-
-    def _call(self, x, out=None):
-        """Return ``self(x[, out])``."""
-        # TODO: pass reasonable options on to the interpolator
-        def linear(arg, out=None):
-            """Interpolating function with vectorization."""
-            if is_valid_input_meshgrid(arg, self.grid.ndim):
-                input_type = 'meshgrid'
-            else:
-                input_type = 'array'
-
-            interpolator = _LinearInterpolator(
-                self.grid.coord_vectors, x, input_type=input_type)
-
-            return interpolator(arg, out=out)
-
-        return self.range.element(linear, vectorized=True)
-
-    def __repr__(self):
-        """Return ``repr(self)``."""
-        posargs = [self.range, self.grid, self.domain]
-        inner_str = signature_string(posargs, [],
-                                     sep=[',\n', ', ', ',\n'],
-                                     mod=['!r', ''])
-        return '{}(\n{}\n)'.format(self.__class__.__name__, indent(inner_str))
-
-
-class PerAxisInterpolation(FunctionSpaceMapping):
-
-    """Interpolation scheme set for each axis individually."""
-
-    def __init__(self, fspace, partition, tspace, schemes, nn_variants='left'):
-        """Initialize a new instance.
-
-        Parameters
-        ----------
-        fspace : `FunctionSpace`
-            Non-discretized (abstract) space of functions to be
-            discretized. ``fspace.domain`` must provide a
-            `Set.contains_set` method.
-        partition : `RectPartition`
-            Partition of (a subset of) ``fspace.domain`` based on a
-            `RectGrid`
-        tspace : `TensorSpace`
-            Space providing containers for the values/coefficients of a
-            discretized object. Its `TensorSpace.shape` must be equal
-            to ``partition.shape``, and its `TensorSpace.field` must
-            match ``fspace.field``.
-        schemes : string or sequence of strings
-            Indicates which interpolation scheme to use for which axis.
-            A single string is interpreted as a global scheme for all
-            axes.
-        nn_variants : string or sequence of strings, optional
-            Which variant ('left' or 'right') to use in nearest neighbor
-            interpolation for which axis. A single string is interpreted
-            as a global variant for all axes.
-            This option has no effect for schemes other than nearest
-            neighbor.
-        """
-        if getattr(fspace, 'field', None) is None:
-            raise TypeError('`fspace.field` cannot be `None`')
-
-        super(PerAxisInterpolation, self).__init__(
-            'interpolation', fspace, partition, tspace, linear=True)
-
-        schemes_in = schemes
-        if is_string(schemes):
-            scheme = str(schemes).lower()
-            if scheme not in _SUPPORTED_INTERP_SCHEMES:
-                raise ValueError('`schemes` {!r} not understood'
-                                 ''.format(schemes_in))
-            schemes = [scheme] * self.grid.ndim
+    """
+    # TODO: pass reasonable options on to the interpolator
+    def linear_interp(arg, out=None):
+        """Interpolating function with vectorization."""
+        if is_valid_input_meshgrid(arg, x.ndim):
+            input_type = 'meshgrid'
         else:
-            schemes = [str(scm).lower() if scm is not None else None
+            input_type = 'array'
+
+        interpolator = _LinearInterpolator(
+            coord_vecs,
+            x,
+            input_type=input_type
+        )
+
+        return interpolator(arg, out=out)
+
+    return linear_interp
+
+
+# TODO: doc
+def per_axis_interpolator(x, coord_vecs, schemes, nn_variants=None):
+    """Interpolator with interpolation scheme per axis.
+
+    Parameters
+    ----------
+    x :
+
+    coord_vecs :
+
+    schemes : string or sequence of strings
+        Indicates which interpolation scheme to use for which axis.
+        A single string is interpreted as a global scheme for all
+        axes.
+    nn_variants : string or sequence of strings, optional
+        Which variant ('left' or 'right') to use in nearest neighbor
+        interpolation for which axis. A single string is interpreted
+        as a global variant for all axes.
+        This option has no effect for schemes other than nearest
+        neighbor.
+
+    """
+    schemes_in = schemes
+    if is_string(schemes):
+        scheme = str(schemes).lower()
+        if scheme not in _SUPPORTED_INTERP_SCHEMES:
+            raise ValueError('`schemes` {!r} not understood'
+                             ''.format(schemes_in))
+        schemes = [scheme] * x.ndim
+    else:
+        schemes = [str(scm).lower() if scm is not None else None
+                   for scm in schemes]
+
+    nn_variants_in = nn_variants
+    if nn_variants is None:
+        nn_variants = ['left' if scm == 'nearest' else None
                        for scm in schemes]
-
-        nn_variants_in = nn_variants
-        if nn_variants is None:
-            nn_variants = ['left' if scm == 'nearest' else None
+    else:
+        if is_string(nn_variants):
+            # Make list with `nn_variants` where `schemes == 'nearest'`,
+            # else `None` (variants only applies to axes with nn
+            # interpolation)
+            nn_variants = [nn_variants if scm == 'nearest' else None
                            for scm in schemes]
+            if str(nn_variants_in).lower() not in ('left', 'right'):
+                raise ValueError('`nn_variants` {!r} not understood'
+                                 ''.format(nn_variants_in))
         else:
-            if is_string(nn_variants):
-                # Make list with `nn_variants` where `schemes == 'nearest'`,
-                # else `None` (variants only applies to axes with nn
-                # interpolation)
-                nn_variants = [nn_variants if scm == 'nearest' else None
-                               for scm in schemes]
-                if str(nn_variants_in).lower() not in ('left', 'right'):
-                    raise ValueError('`nn_variants` {!r} not understood'
-                                     ''.format(nn_variants_in))
-            else:
-                nn_variants = [str(var).lower() if var is not None else None
-                               for var in nn_variants]
+            nn_variants = [str(var).lower() if var is not None else None
+                           for var in nn_variants]
 
-        for i in range(self.grid.ndim):
-            # Reaching a raise condition here only happens for invalid
-            # sequences of inputs, single-input case has been checked above
-            if schemes[i] not in _SUPPORTED_INTERP_SCHEMES:
-                raise ValueError('`interp[{}]={!r}` not understood'
-                                 ''.format(schemes_in[i], i))
-            if (schemes[i] == 'nearest' and
-                    nn_variants[i] not in ('left', 'right')):
-                raise ValueError('`nn_variants[{}]={!r}` not understood'
-                                 ''.format(nn_variants_in[i], i))
-            elif schemes[i] != 'nearest' and nn_variants[i] is not None:
-                raise ValueError('in axis {}: `nn_variants` cannot be used '
-                                 'with `interp={!r}'
-                                 ''.format(i, schemes_in[i]))
+    for i in range(x.ndim):
+        # Reaching a raise condition here only happens for invalid
+        # sequences of inputs, single-input case has been checked above
+        if schemes[i] not in _SUPPORTED_INTERP_SCHEMES:
+            raise ValueError('`interp[{}]={!r}` not understood'
+                             ''.format(schemes_in[i], i))
+        if (schemes[i] == 'nearest' and
+                nn_variants[i] not in ('left', 'right')):
+            raise ValueError('`nn_variants[{}]={!r}` not understood'
+                             ''.format(nn_variants_in[i], i))
+        elif schemes[i] != 'nearest' and nn_variants[i] is not None:
+            raise ValueError('in axis {}: `nn_variants` cannot be used '
+                             'with `interp={!r}'
+                             ''.format(i, schemes_in[i]))
 
-        self.__schemes = schemes
-        self.__nn_variants = nn_variants
-
-    @property
-    def schemes(self):
-        """List of interpolation schemes, one for each axis."""
-        return self.__schemes
-
-    @property
-    def nn_variants(self):
-        """List of nearest neighbor variants, one for each axis."""
-        return self.__nn_variants
-
-    def _call(self, x, out=None):
-        """Create an interpolator from grid values ``x``.
-
-        Parameters
-        ----------
-        x : `Tensor`
-            The array of values to be interpolated
-        out : `FunctionSpaceElement`, optional
-            Element in which to store the interpolator
-
-        Returns
-        -------
-        out : `FunctionSpaceElement`
-            Per-axis interpolator for the grid of this operator. If
-            ``out`` was provided, the returned object is a reference
-            to it.
-        """
-        def per_axis_interp(arg, out=None):
-            """Interpolating function with vectorization."""
-            if is_valid_input_meshgrid(arg, self.grid.ndim):
-                input_type = 'meshgrid'
-            else:
-                input_type = 'array'
-
-            interpolator = _PerAxisInterpolator(
-                self.grid.coord_vectors, x,
-                schemes=self.schemes, nn_variants=self.nn_variants,
-                input_type=input_type)
-
-            return interpolator(arg, out=out)
-
-        return self.range.element(per_axis_interp, vectorized=True)
-
-    def __repr__(self):
-        """Return ``repr(self)``."""
-        if all(scm == self.schemes[0] for scm in self.schemes):
-            schemes = self.schemes[0]
+    def per_axis_interp(arg, out=None):
+        """Interpolating function with vectorization."""
+        if is_valid_input_meshgrid(arg, x.ndim):
+            input_type = 'meshgrid'
         else:
-            schemes = self.schemes
+            input_type = 'array'
 
-        posargs = [self.range, self.grid, self.domain, schemes]
+        interpolator = _PerAxisInterpolator(
+            coord_vecs,
+            x,
+            schemes=schemes,
+            nn_variants=nn_variants,
+            input_type=input_type
+        )
 
-        nn_relevant = [x for x in self.nn_variants if x is not None]
-        if not nn_relevant:
-            # No NN axes, ignore nn_variants
-            optargs = []
-        else:
-            # Use single string if all are equal, one per axis otherwise
-            first_relevant = nn_relevant[0]
+        return interpolator(arg, out=out)
 
-            if all(var == first_relevant for var in nn_relevant):
-                variants = first_relevant
-            else:
-                variants = self.nn_variants
-
-            optargs = [('nn_variants', variants, 'left')]
-
-        inner_str = signature_string(posargs, optargs,
-                                     sep=[',\n', ', ', ',\n'],
-                                     mod=['!r', ''])
-        return '{}(\n{}\n)'.format(self.__class__.__name__, indent(inner_str))
+    return per_axis_interp
 
 
 class _Interpolator(object):
@@ -963,9 +664,12 @@ class _LinearInterpolator(_PerAxisInterpolator):
             Type of expected input values in ``__call__``
         """
         super(_LinearInterpolator, self).__init__(
-            coord_vecs, values, input_type,
+            coord_vecs,
+            values,
+            input_type,
             schemes=['linear'] * len(coord_vecs),
-            nn_variants=[None] * len(coord_vecs))
+            nn_variants=[None] * len(coord_vecs),
+        )
 
 
 if __name__ == '__main__':
