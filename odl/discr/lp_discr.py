@@ -348,7 +348,7 @@ class DiscreteLp(TensorSpace):
         elif callable(inp):
             vectorized = kwargs.pop('vectorized', True)
             func = make_vec_func_for_sampling(
-                inp, self.domain, vectorized, out_dtype=self.dtype
+                inp, self.domain, out_dtype=self.dtype, vectorized=vectorized
             )
             sampled = point_collocation(func, self.meshgrid, **kwargs)
             return self.element_type(
