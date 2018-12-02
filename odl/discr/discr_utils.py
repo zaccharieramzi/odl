@@ -175,6 +175,32 @@ def point_collocation(func, points, out=None, **kwargs):
     return out
 
 
+def _normalize_interp(interp, ndim):
+    """Turn interpolation type into a tuple with one entry per axis."""
+    interp_in = interp
+    if is_string(interp):
+        interp = str(interp).lower()
+        if interp not in _SUPPORTED_INTERP_SCHEMES:
+            raise ValueError('`interp` {!r} not understood'.format(interp_in))
+        interp_byaxis = (interp,) * ndim
+    else:
+        interp_byaxis = tuple(str(itp).lower() for itp in interp)
+        if len(interp_byaxis) != ndim:
+            raise ValueError(
+                'length of `interp` ({}) does not match number of axes ({})'
+                ''.format(len(interp_byaxis, ndim))
+            )
+
+    return interp_byaxis
+
+
+def _all_interp_equal(interp_byaxis):
+    """Whether all entries are equal, with ``False`` for length 0."""
+    if len(interp_byaxis) == 0:
+        return False
+    return all(itp == interp_byaxis[0] for itp in interp_byaxis)
+
+
 # TODO: fix docs
 def nearest_interpolator(x, coord_vecs, variant='left'):
     """Nearest neighbor interpolation.

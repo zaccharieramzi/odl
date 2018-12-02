@@ -12,16 +12,16 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from odl.discr.lp_discr import DiscreteLp, uniform_partition
 from odl.discr.discr_utils import (
-    point_collocation, per_axis_interpolator, _SUPPORTED_INTERP_SCHEMES)
+    _all_interp_equal, _normalize_interp, per_axis_interpolator,
+    point_collocation)
+from odl.discr.lp_discr import DiscreteLp, uniform_partition
 from odl.operator import Operator
 from odl.space import tensor_space
 from odl.util import (
-    is_string, normalized_scalar_param_list, resize_array, safe_int_conv,
-    writable_array)
-from odl.util.utility import none_context
+    normalized_scalar_param_list, resize_array, safe_int_conv, writable_array)
 from odl.util.numerics import _SUPPORTED_RESIZE_PAD_MODES
+from odl.util.utility import none_context
 
 __all__ = ('Resampling', 'ResizingOperator')
 
@@ -44,6 +44,7 @@ class Resampling(Operator):
             Interpolation type that should be used to resample. A single
             value applies to all axes, and a sequence gives the iterpolation
             scheme per axis.
+
             Supported values: ``'nearest'``, ``'linear'``
 
         Examples
@@ -81,16 +82,7 @@ class Resampling(Operator):
         super(Resampling, self).__init__(
             domain=domain, range=range, linear=True)
 
-        interp_in = interp
-        if is_string(interp):
-            interp = str(interp).lower()
-            if interp not in _SUPPORTED_INTERP_SCHEMES:
-                raise ValueError(
-                    '`interp` {!r} not understood'.format(interp_in)
-                )
-            self.__interp_byaxis = (interp,) * domain.ndim
-        else:
-            self.__interp_byaxis = tuple(str(itp).lower() for itp in interp)
+        self.__interp_byaxis = _normalize_interp(interp, domain.ndim)
 
     @property
     def interp_byaxis(self):
@@ -100,7 +92,7 @@ class Resampling(Operator):
     @property
     def interp(self):
         """Interpolation scheme or tuple of per-axis interpolation schemes."""
-        if all(itp == self.interp_byaxis[0] for itp in self.interp_byaxis[1:]):
+        if _all_interp_equal(self.interp_byaxis):
             return self.interp_byaxis[0]
         else:
             return self.interp_byaxis
@@ -171,12 +163,23 @@ class Resampling(Operator):
         return self.inverse
 
 
-class ResizingOperatorBase(Operator):
+class ResizingOperator(Operator):
 
-    """Base class for `ResizingOperator` and its adjoint.
+    """Operator mapping a discretized function to a new domain.
 
-    This is an abstract class used to share code between the forward and
-    adjoint variants of the resizing operator.
+    This operator is a mapping between uniformly discretized
+    `DiscreteLp` spaces with the same `DiscreteLp.cell_sides`,
+    but different `DiscreteLp.shape`. The underlying operation is array
+    resizing, i.e. no resampling is performed.
+    In axes where the domain is enlarged, the new entries are filled
+    ("padded") according to a provided parameter ``pad_mode``.
+
+    All resizing operator variants are linear, except constant padding
+    with constant != 0.
+
+    See `the online documentation
+    <https://odlgroup.github.io/odl/math/resizing_ops.html>`_
+    on resizing operators for mathematical details.
     """
 
     def __init__(self, domain, range=None, ran_shp=None, **kwargs):
@@ -343,8 +346,7 @@ class ResizingOperatorBase(Operator):
         # padding mode 'constant' with `pad_const != 0` is not linear
         linear = (self.pad_mode != 'constant' or self.pad_const == 0.0)
 
-        super(ResizingOperatorBase, self).__init__(
-            domain, ran, linear=linear)
+        super(ResizingOperator, self).__init__(domain, ran, linear=linear)
 
     @property
     def offset(self):
@@ -366,26 +368,6 @@ class ResizingOperatorBase(Operator):
         """Dimensions in which an actual resizing is performed."""
         return tuple(i for i in range(self.domain.ndim)
                      if self.domain.shape[i] != self.range.shape[i])
-
-
-class ResizingOperator(ResizingOperatorBase):
-
-    """Operator mapping a discretized function to a new domain.
-
-    This operator is a mapping between uniformly discretized
-    `DiscreteLp` spaces with the same `DiscreteLp.cell_sides`,
-    but different `DiscreteLp.shape`. The underlying operation is array
-    resizing, i.e. no resampling is performed.
-    In axes where the domain is enlarged, the new entries are filled
-    ("padded") according to a provided parameter ``pad_mode``.
-
-    All resizing operator variants are linear, except constant padding
-    with constant != 0.
-
-    See `the online documentation
-    <https://odlgroup.github.io/odl/math/resizing_ops.html>`_
-    on resizing operators for mathematical details.
-    """
 
     def _call(self, x, out):
         """Implement ``self(x, out)``."""
@@ -416,9 +398,9 @@ class ResizingOperator(ResizingOperatorBase):
             raise NotImplementedError('this operator is not linear and '
                                       'thus has no adjoint')
 
-        forward_op = self
+        op = self
 
-        class ResizingOperatorAdjoint(ResizingOperatorBase):
+        class ResizingOperatorAdjoint(Operator):
 
             """Adjoint of `ResizingOperator`.
 
@@ -430,15 +412,15 @@ class ResizingOperator(ResizingOperatorBase):
             def _call(self, x, out):
                 """Implement ``self(x, out)``."""
                 with writable_array(out) as out_arr:
-                    resize_array(x.asarray(), self.range.shape,
-                                 offset=self.offset, pad_mode=self.pad_mode,
+                    resize_array(x.asarray(), op.domain.shape,
+                                 offset=op.offset, pad_mode=op.pad_mode,
                                  pad_const=0, direction='adjoint',
                                  out=out_arr)
 
             @property
             def adjoint(self):
                 """Adjoint of the adjoint, i.e. the original operator."""
-                return forward_op
+                return op
 
             @property
             def inverse(self):
@@ -452,8 +434,7 @@ class ResizingOperator(ResizingOperatorBase):
                     domain=self.range, range=self.domain,
                     pad_mode=self.pad_mode)
 
-        return ResizingOperatorAdjoint(domain=self.range, range=self.domain,
-                                       pad_mode=self.pad_mode)
+        return ResizingOperatorAdjoint(op.range, op.domain, linear=True)
 
     @property
     def inverse(self):
@@ -463,7 +444,7 @@ class ResizingOperator(ResizingOperatorBase):
         acts as left inverse, while in restriction axes, it is a
         right inverse.
         """
-        return ResizingOperator(domain=self.range, range=self.domain,
+        return ResizingOperator(self.range, self.domain,
                                 pad_mode=self.pad_mode,
                                 pad_const=self.pad_const)
 
