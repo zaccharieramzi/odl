@@ -18,9 +18,6 @@ __all__ += grid.__all__
 from .partition import *
 __all__ += partition.__all__
 
-from .discr_mappings import *
-__all__ += discr_mappings.__all__
-
 from .lp_discr import *
 __all__ += lp_discr.__all__
 
@@ -29,3 +26,5 @@ __all__ += discr_ops.__all__
 
 from .diff_ops import *
 __all__ += diff_ops.__all__
+
+from . import discr_utils

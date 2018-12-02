@@ -14,14 +14,13 @@ from numbers import Integral
 
 import numpy as np
 
-from odl.discr.discr_mappings import point_collocation
+from odl.discr.discr_utils import point_collocation, wrap_function_or_array
 from odl.discr.partition import (
     RectPartition, uniform_partition, uniform_partition_fromintv)
 from odl.set import IntervalProd, RealNumbers
 from odl.space import ProductSpace
 from odl.space.base_tensors import Tensor, TensorSpace
 from odl.space.entry_points import tensor_space_impl
-from odl.space.fspace import wrap_function_or_array
 from odl.space.weighting import ConstWeighting
 from odl.util import (
     apply_on_boundary, array_str, dtype_str, indent, is_floating_dtype,
@@ -466,11 +465,8 @@ class DiscreteLp(TensorSpace):
         Returns
         -------
         equals : bool
-            ``True`` if ``other`` is a `DiscretizedSpace`
-            instance and all attributes `fspace`, `tspace`,
-            `DiscretizedSpace.sampling` and `DiscretizedSpace.interpolation`
-            of ``other`` and this discretization are equal, ``False``
-            otherwise.
+            ``True`` if ``other`` is a `DiscretizedSpace` with equal
+            `tspace`, ``False`` otherwise.
         """
         # Optimizations for simple cases
         if other is self:
