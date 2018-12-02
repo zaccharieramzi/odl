@@ -14,7 +14,7 @@ from numbers import Integral
 
 import numpy as np
 
-from odl.discr.discr_utils import point_collocation, wrap_function_or_array
+from odl.discr.discr_utils import point_collocation, make_vec_func_for_sampling
 from odl.discr.partition import (
     RectPartition, uniform_partition, uniform_partition_fromintv)
 from odl.set import IntervalProd, RealNumbers
@@ -347,10 +347,10 @@ class DiscreteLp(TensorSpace):
             return self.element_type(self, inp)
         elif callable(inp):
             vectorized = kwargs.pop('vectorized', True)
-            wrapped_func = wrap_function_or_array(
+            func = make_vec_func_for_sampling(
                 inp, self.domain, vectorized, out_dtype=self.dtype
             )
-            sampled = point_collocation(wrapped_func, self.meshgrid, **kwargs)
+            sampled = point_collocation(func, self.meshgrid, **kwargs)
             return self.element_type(
                 self, self.tspace.element(sampled, order=order))
         else:

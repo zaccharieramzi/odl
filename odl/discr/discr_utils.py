@@ -28,71 +28,128 @@ from odl.util import (
     dtype_repr, is_complex_floating_dtype, is_real_dtype, is_string,
     is_valid_input_array, is_valid_input_meshgrid, out_shape_from_array,
     out_shape_from_meshgrid, vectorize, writable_array)
-from odl.util.utility import getargspec
 
 __all__ = (
     'point_collocation',
     'nearest_interpolator',
     'linear_interpolator',
     'per_axis_interpolator',
-    'wrap_function_or_array',
+    'make_vec_func_for_sampling',
 )
 
 _SUPPORTED_INTERP_SCHEMES = ['nearest', 'linear']
 
 
-def point_collocation(func, meshgrid, out=None, **kwargs):
+def point_collocation(func, points, out=None, **kwargs):
     """Sample a function on a grid of points.
 
     This function represents the simplest way of discretizing a function.
-    It does little more than calling the function on a sparse meshgrid
-    and returning the result.
+    It does little more than calling the function on a single point or a
+    set of points, and returning the result.
 
     Parameters
     ----------
     func : callable
-        Function to be sampled. It must be vectorized, i.e., it must support
-        evaluation with a (sparse) meshgrid of points. Optionally, the ``func``
-        can accept an optional `numpy.ndarray` as ``out`` argument to which
-        results can be written.
-    meshgrid : TODO
-        TODO
-    out : numpy.ndarray
-        TODO
+        Function to be sampled. It is expected to work with single points,
+        meshgrids and point arrays, and to support an optional ``out``
+        argument.
+        Usually, ``func`` is the return value of `make_vec_func_for_sampling`.
+    points : point, meshgrid or array of points
+        The point(s) where to sample.
+    out : numpy.ndarray, optional
+        Array to which the result should be written.
     kwargs :
         Additional arguments that are passed on to ``func``.
+
+    Returns
+    -------
+    out : numpy.ndarray
+        Array holding the values of ``func`` at ``points``. If ``out`` was
+        given, the returned object is a reference to it.
 
     Examples
     --------
     Sample a 1D function:
 
-    >>> mesh = np.meshgrid([1, 2, 3])
-    >>> point_collocation(lambda x: x ** 2, mesh)
+    >>> from odl.discr.grid import sparse_meshgrid
+    >>> domain = odl.IntervalProd(0, 5)
+    >>> func = make_vec_func_for_sampling(lambda x: x ** 2, domain)
+    >>> mesh = sparse_meshgrid([1, 2, 3])
+    >>> point_collocation(func, mesh)
+    array([ 1.,  4.,  9.])
+
+    By default, inputs are checked against ``domain`` to be in bounds. This
+    can be switched off by passing ``bounds_check=False``:
+
+    >>> mesh = np.meshgrid([-1, 0, 4])
+    >>> point_collocation(func, mesh, bounds_check=False)
+
+    array([  1.,   0.,  16.])
 
     In two or more dimensions, the function to be sampled can be written as
     if its arguments were the components of a point, and an implicit loop
     around the call would iterate over all points:
 
+    >>> domain = odl.IntervalProd([0, 0], [5, 5])
     >>> xs = [1, 2]
     >>> ys = [3, 4, 5]
-    >>> mesh = np.meshgrid(xs, ys, sparse=True)
-    >>> point_collocation(lambda x: x[0] - x[1], mesh)
+    >>> mesh = sparse_meshgrid(xs, ys)
+    >>> func = make_vec_func_for_sampling(lambda x: x[0] - x[1], domain)
+    >>> point_collocation(func, mesh)
+    array([[-2., -3., -4.],
+           [-1., -2., -3.]])
 
-    It is possible to use parametric functions and pass the parameters
-    during operator call:
+    It is possible to return results that require broadcasting, and to use
+    *optional* function parameters:
 
-    >>> def plus_c(x, c=0):
-    ...     return x[0] - x[1] + c
-    >>> coll_op(plus_c)  # uses default c = 0
-    rn((2, 3)).element(
-        [[-2., -3., -4.],
-         [-1., -2., -3.]]
-    )
-    >>> coll_op(plus_c, c=2)
-    rn((2, 3)).element(
-        [[ 0., -1., -2.],
-         [ 1.,  0., -1.]]
-    )
+    >>> def f(x, c=0):
+    ...     return x[0] + c
+    >>> func = make_vec_func_for_sampling(f, domain)
+    >>> point_collocation(func, mesh)  # uses default c=0
+    array([[ 1.,  1.,  1.],
+           [ 2.,  2.,  2.]])
+    >>> point_collocation(func, mesh, c=2)
+    array([[ 3.,  3.,  3.],
+           [ 4.,  4.,  4.]])
+
+    The ``point_collocation`` function also supports vector- and tensor-valued
+    functions. They can be given either as a single function returning an
+    array-like of results, or as an array-like of member functions:
+
+    >>> domain = odl.IntervalProd([0, 0], [5, 5])
+    >>> xs = [1, 2]
+    >>> ys = [3, 4]
+    >>> mesh = sparse_meshgrid(xs, ys)
+    >>> def vec_valued(x):
+    ...     return (x[0] - 1, 0, x[0] + x[1])  # broadcasting
+    >>> # We must tell the wrapper that we want a 3-component function
+    >>> func1 = make_vec_func_for_sampling(
+    ...     vec_valued, domain, out_dtype=(float, (3,)))
+    >>> point_collocation(func1, mesh)
+    array([[[ 0.,  0.],
+            [ 1.,  1.]],
+
+           [[ 0.,  0.],
+            [ 0.,  0.]],
+
+           [[ 4.,  5.],
+            [ 5.,  6.]]])
+    >>> array_of_funcs = [  # equivalent to `vec_valued`
+    ...     lambda x: x[0] - 1,
+    ...     0,                   # constants are allowed
+    ...     lambda x: x[0] + x[1]
+    ... ]
+    >>> func2 = make_vec_func_for_sampling(
+    ...     array_of_funcs, domain, out_dtype=(float, (3,)))
+    >>> point_collocation(func2, mesh)
+    array([[[ 0.,  0.],
+            [ 1.,  1.]],
+
+           [[ 0.,  0.],
+            [ 0.,  0.]],
+
+           [[ 4.,  5.],
+            [ 5.,  6.]]])
 
     Notes
     -----
@@ -102,6 +159,7 @@ def point_collocation(func, meshgrid, out=None, **kwargs):
 
     See Also
     --------
+    make_vec_func_for_sampling : wrap a function
     odl.discr.grid.RectGrid.meshgrid
     numpy.meshgrid
 
@@ -111,10 +169,9 @@ def point_collocation(func, meshgrid, out=None, **kwargs):
        https://odlgroup.github.io/odl/guide/in_depth/vectorization_guide.html
     """
     if out is None:
-        out = func(meshgrid, **kwargs)
+        out = func(points, **kwargs)
     else:
-        # TODO: wrap `func` if it doesn't support `out`
-        func(meshgrid, out=out, **kwargs)
+        func(points, out=out, **kwargs)
     return out
 
 
@@ -688,7 +745,7 @@ def _check_func_out_arg(func):
     """Check if ``func`` has an (optional) ``out`` argument.
 
     Also verify that the signature of ``func`` has no ``*args`` since
-    they make argument propagation a hassle.
+    they make argument propagation a huge hassle.
 
     Parameters
     ----------
@@ -740,18 +797,20 @@ def _func_out_type(func):
     """Check if ``func`` has (optional) output argument.
 
     This function is intended to work with all types of callables
-    that are used as input to `FunctionSpace.element`.
+    that are used as input to `make_vec_func_for_sampling`.
     """
     # Numpy Ufuncs and similar objects (e.g. Numba DUfuncs)
     if hasattr(func, 'nin') and hasattr(func, 'nout'):
         if func.nin != 1:
-            raise ValueError('ufunc {} has {} input parameter(s), '
-                             'expected 1'
-                             ''.format(func.__name__, func.nin))
+            raise ValueError(
+                'ufunc {} takes {} input arguments, expected 1'
+                ''.format(func.__name__, func.nin)
+            )
         if func.nout > 1:
-            raise ValueError('ufunc {} has {} output parameter(s), '
-                             'expected at most 1'
-                             ''.format(func.__name__, func.nout))
+            raise ValueError(
+                'ufunc {} returns {} outputs, expected 0 or 1'
+                ''.format(func.__name__, func.nout)
+            )
         has_out = out_optional = (func.nout == 1)
     elif inspect.isfunction(func):
         has_out, out_optional = _check_func_out_arg(func)
@@ -763,159 +822,56 @@ def _func_out_type(func):
     return has_out, out_optional
 
 
-# TODO: docs
-def wrap_function_or_array(func, domain, vectorized=True, out_dtype='float64'):
-    """Create a `FunctionSpace` element.
+def make_vec_func_for_sampling(func_or_arr, domain, out_dtype='float64',
+                               vectorized=True):
+    """Return a vectorized function that can be used for sampling.
+
+    For examples on this function's usage, see `point_collocation`.
 
     Parameters
     ----------
-    func : callable, optional
-        The actual instruction for out-of-place evaluation.
-        It must return a `FunctionSpace.range` element or a
-        `numpy.ndarray` of such (vectorized call).
-        If ``func`` is a `FunctionSpaceElement`, it is wrapped
-        as a new `FunctionSpaceElement`.
-        Default: `zero`.
+    func_or_arr : callable or array-like
+        Either a callable object or an array or callables and constants.
+    domain : IntervalProd
+        Set in which inputs to the function are assumed to lie. It is used
+        to determine the type of input (point/meshgrid/array) based on
+        ``domain.ndim``, and (unless switched off) to check whether all
+        inputs are in bounds.
+    out_dtype : optional
+        Data type of a *single* output of ``func_or_arr``, i.e., when
+        called with a single point as input. In particular:
+
+        - If ``func_or_arr`` is a scalar-valued function, ``out_dtype`` is
+          expected to be a basic dtype with empty shape.
+        - If ``func_or_arr`` is a vector- or tensor-valued function,
+          ``out_dtype`` should be a shaped data type, e.g., ``(float, (3,))``
+          for a vector-valued function with 3 components.
+        - If ``func_or_arr`` is an array-like, ``out_dtype`` should be a
+          shaped dtype whose shape matches that of ``func_or_arr``.
+
     vectorized : bool, optional
-        If ``True``, assume that ``func`` supports vectorized
-        evaluation. For ``False``, the function is decorated with a
-        vectorizer, which implies that two elements created this way
-        from the same function are regarded as not equal.
-        The ``False`` option cannot be used if ``func`` has an
-        ``out`` parameter.
+        Whether the provided function or functions support vectorized call.
+        If ``False``, `numpy.vectorize` is used to add that support. Note
+        that this results in very slow evaluation.
 
     Returns
     -------
-    element : `FunctionSpaceElement`
-        The new element, always supporting vectorization.
-
-    Examples
-    --------
-    Scalar-valued functions are straightforward to create:
-
-    >>> fspace = odl.FunctionSpace(odl.IntervalProd(0, 1))
-    >>> func = fspace.element(lambda x: x - 1)
-    >>> func(0.5)
-    -0.5
-    >>> func([0.1, 0.5, 0.6])
-    array([-0.9, -0.5, -0.4])
-
-    It is also possible to use functions with parameters. Note that
-    such extra parameters have to be given by keyword when calling
-    the function:
-
-    >>> def f(x, b):
-    ...     return x + b
-    >>> func = fspace.element(f)
-    >>> func([0.1, 0.5, 0.6], b=1)
-    array([ 1.1, 1.5,  1.6])
-    >>> func([0.1, 0.5, 0.6], b=-1)
-    array([-0.9, -0.5, -0.4])
-
-    Vector-valued functions can eiter be given as a sequence of
-    scalar-valued functions or as a single function that returns
-    a sequence:
-
-    >>> # Space of vector-valued functions with 2 components
-    >>> fspace = odl.FunctionSpace(odl.IntervalProd(0, 1),
-    ...                            out_dtype=(float, (2,)))
-    >>> # Possibility 1: provide component functions
-    >>> func1 = fspace.element([lambda x: x + 1, np.negative])
-    >>> func1(0.5)
-    array([ 1.5, -0.5])
-    >>> func1([0.1, 0.5, 0.6])
-    array([[ 1.1,  1.5,  1.6],
-           [-0.1, -0.5, -0.6]])
-    >>> # Possibility 2: single function returning a sequence
-    >>> func2 = fspace.element(lambda x: (x + 1, -x))
-    >>> func2(0.5)
-    array([ 1.5, -0.5])
-    >>> func2([0.1, 0.5, 0.6])
-    array([[ 1.1,  1.5,  1.6],
-           [-0.1, -0.5, -0.6]])
-
-    If the function(s) include(s) an ``out`` parameter, it can be
-    provided to hold the final result:
-
-    >>> # Sequence of functions with `out` parameter
-    >>> def f1(x, out):
-    ...     out[:] = x + 1
-    >>> def f2(x, out):
-    ...     out[:] = -x
-    >>> func = fspace.element([f1, f2])
-    >>> out = np.empty((2, 3))  # needs to match expected output shape
-    >>> result = func([0.1, 0.5, 0.6], out=out)
-    >>> out
-    array([[ 1.1,  1.5,  1.6],
-           [-0.1, -0.5, -0.6]])
-    >>> result is out
-    True
-    >>> # Single function assigning to components of `out`
-    >>> def f(x, out):
-    ...     out[0] = x + 1
-    ...     out[1] = -x
-    >>> func = fspace.element(f)
-    >>> out = np.empty((2, 3))  # needs to match expected output shape
-    >>> result = func([0.1, 0.5, 0.6], out=out)
-    >>> out
-    array([[ 1.1,  1.5,  1.6],
-           [-0.1, -0.5, -0.6]])
-    >>> result is out
-    True
-
-    Tensor-valued functions and functions defined on higher-dimensional
-    domains work just analogously:
-
-    >>> fspace = odl.FunctionSpace(odl.IntervalProd([0, 0], [1, 1]),
-    ...                            out_dtype=(float, (2, 3)))
-    >>> def pyfunc(x):
-    ...     return [[x[0], x[1], x[0] + x[1]],
-    ...             [1, 0, 2 * (x[0] + x[1])]]
-    >>> func1 = fspace.element(pyfunc)
-    >>> # Points are given such that the first axis indexes the
-    >>> # components and the second enumerates the points.
-    >>> # We evaluate at [0.0, 0.5] and [0.0, 1.0] here.
-    >>> eval_pts = np.array([[0.0, 0.5],
-    ...                      [0.0, 1.0]]).T
-    >>> func1(eval_pts).shape
-    (2, 3, 2)
-    >>> func1(eval_pts)
-    array([[[ 0. ,  0. ],
-            [ 0.5,  1. ],
-            [ 0.5,  1. ]],
-    <BLANKLINE>
-           [[ 1. ,  1. ],
-            [ 0. ,  0. ],
-            [ 1. ,  2. ]]])
-
-    Furthermore, it is allowed to use scalar constants instead of
-    functions if the function is given as sequence:
-
-    >>> seq = [[lambda x: x[0], lambda x: x[1], lambda x: x[0] + x[1]],
-    ...        [1, 0, lambda x: 2 * (x[0] + x[1])]]
-    >>> func2 = fspace.element(seq)
-    >>> func2(eval_pts)
-    array([[[ 0. ,  0. ],
-            [ 0.5,  1. ],
-            [ 0.5,  1. ]],
-    <BLANKLINE>
-           [[ 1. ,  1. ],
-            [ 0. ,  0. ],
-            [ 1. ,  2. ]]])
+    func : function
+        Wrapper function that supports vectorized call and an optional
+        ``out`` argument.
     """
-    # Preserve `None`, don't let `np.dtype` convert it to `float64`
     if out_dtype is None:
-        val_shape = ()
-        scalar_out_dtype = None
-    else:
-        out_dtype = np.dtype(out_dtype)
-        val_shape = out_dtype.shape
-        scalar_out_dtype = out_dtype.base
+        # Don't let `np.dtype` convert `None` to `float64`
+        raise TypeError('`out_dtype` cannot be `None`')
+
+    out_dtype = np.dtype(out_dtype)
+    val_shape = out_dtype.shape
+    scalar_out_dtype = out_dtype.base
 
     # Provide default implementations of missing function signature types
 
     def _default_oop(func_ip, x, **kwargs):
-        """Default in-place evaluation method."""
+        """Default out-of-place variant of an in-place-only function."""
         if is_valid_input_array(x, domain.ndim):
             scalar_out_shape = out_shape_from_array(x)
         elif is_valid_input_meshgrid(x, domain.ndim):
@@ -924,14 +880,13 @@ def wrap_function_or_array(func, domain, vectorized=True, out_dtype='float64'):
             raise TypeError('cannot use in-place method to implement '
                             'out-of-place non-vectorized evaluation')
 
-        dtype = scalar_out_dtype or np.result_type(*x)
         out_shape = val_shape + scalar_out_shape
-        out = np.empty(out_shape, dtype=dtype)
+        out = np.empty(out_shape, dtype=scalar_out_dtype)
         func_ip(x, out=out, **kwargs)
         return out
 
     def _default_ip(func_oop, x, out, **kwargs):
-        """Default in-place evaluation method."""
+        """Default in-place variant of an out-of-place-only function."""
         result = np.array(func_oop(x, **kwargs), copy=False)
         if result.dtype == object:
             # Different shapes encountered, need to broadcast
@@ -964,9 +919,13 @@ def wrap_function_or_array(func, domain, vectorized=True, out_dtype='float64'):
 
         return out
 
+    # Now prepare the in-place and out-of-place functions for the final
+    # wrapping. If needed, vectorize.
 
-    if callable(func):
+    if callable(func_or_arr):
         # Got a (single) function, possibly need to vectorize
+        func = func_or_arr
+
         if not vectorized:
             if hasattr(func, 'nin') and hasattr(func, 'nout'):
                 warnings.warn(
@@ -974,7 +933,7 @@ def wrap_function_or_array(func, domain, vectorized=True, out_dtype='float64'):
                     ''.format(func),
                     UserWarning
                 )
-            # Don't call this on a ufunc, they can't be inspected
+            # Don't put this before the ufunc case. Ufuncs can't be inspected.
             has_out, _ = _func_out_type(func)
             if has_out:
                 raise TypeError(
@@ -1006,13 +965,15 @@ def wrap_function_or_array(func, domain, vectorized=True, out_dtype='float64'):
         # This is for the case that an array-like of callables is provided.
         # We need to convert this into a single function that returns an
         # array, and maybe we need to vectorize member functions.
-        if np.shape(func) != val_shape:
-            raise ValueError(
-                'invalid `func` {!r}: expected `None`, a callable or '
-                'an array-like of callables whose shape matches '
-                '`dtype.shape` {}'.format(val_shape))
 
-        funcs = np.array(func, dtype=object, ndmin=1).ravel().tolist()
+        arr = func_or_arr
+        if np.shape(arr) != val_shape:
+            raise ValueError(
+                'invalid `func_or_arr` {!r}: expected `None`, a callable or '
+                'an array-like of callables whose shape matches '
+                '`out_dtype.shape` {}'.format(val_shape))
+
+        arr = np.array(arr, dtype=object, ndmin=1).ravel().tolist()
         if not vectorized:
             if is_real_dtype(out_dtype):
                 otypes = ['float64']
@@ -1022,11 +983,11 @@ def wrap_function_or_array(func, domain, vectorized=True, out_dtype='float64'):
                 otypes = []
 
             # Vectorize, preserving scalars
-            funcs = [f if np.isscalar(f) else vectorize(otypes=otypes)(f)
-                      for f in funcs]
+            arr = [f if np.isscalar(f) else vectorize(otypes=otypes)(f)
+                   for f in arr]
 
         def array_wrapper_func(x, out=None, **kwargs):
-            """Function wrapping an array of callables.
+            """Function wrapping an array of callables and constants.
 
             This wrapper does the following for out-of-place
             evaluation (when ``out=None``):
@@ -1062,31 +1023,28 @@ def wrap_function_or_array(func, domain, vectorized=True, out_dtype='float64'):
                 # `results.append(f(x))`, just for a bunch of cases
                 # and with or without `out`.
                 results = []
-                for f in funcs:
+                for f in arr:
                     if np.isscalar(f):
                         # Constant function
                         results.append(f)
                     elif not callable(f):
-                        raise TypeError('element {!r} of sequence not '
-                                        'callable'.format(f))
+                        raise TypeError(
+                            'element {!r} of `func_or_arr` not callable'
+                            ''.format(f)
+                        )
                     elif hasattr(f, 'nin') and hasattr(f, 'nout'):
                         # ufunc-like object
                         results.append(f(x, **kwargs))
                     else:
-                        try:
-                            has_out = 'out' in getargspec(f).args
-                        except TypeError:
-                            raise TypeError('unsupported callable {!r}'
-                                            ''.format(f))
+                        has_out, _ = _func_out_type(f)
+                        if has_out:
+                            out = np.empty(
+                                scalar_out_shape, dtype=scalar_out_dtype
+                            )
+                            f(x, out=out, **kwargs)
+                            results.append(out)
                         else:
-                            if has_out:
-                                out = np.empty(
-                                    scalar_out_shape, dtype=scalar_out_dtype
-                                )
-                                f(x, out=out, **kwargs)
-                                results.append(out)
-                            else:
-                                results.append(f(x, **kwargs))
+                            results.append(f(x, **kwargs))
 
                 # Broadcast to required shape and convert to array.
                 # This will raise an error if the shape of some member
@@ -1116,7 +1074,7 @@ def wrap_function_or_array(func, domain, vectorized=True, out_dtype='float64'):
                     # Flatten tensor axes to work on one tensor
                     # component (= scalar function) at a time
                     out_comps = out.reshape((-1,) + scalar_out_shape)
-                    for f, out_comp in zip(funcs, out_comps):
+                    for f, out_comp in zip(arr, out_comps):
                         if np.isscalar(f):
                             out_comp[:] = f
                         else:
@@ -1128,21 +1086,20 @@ def wrap_function_or_array(func, domain, vectorized=True, out_dtype='float64'):
 
         func_ip = func_oop = array_wrapper_func
 
-    return _make_checked_dual_use_func(func_ip, func_oop, domain, out_dtype)
+    return _make_dual_use_func(func_ip, func_oop, domain, out_dtype)
 
 
-def _make_checked_dual_use_func(func_ip, func_oop, domain, out_dtype=None):
+def _make_dual_use_func(func_ip, func_oop, domain, out_dtype):
+    """Return a unifying wrapper function with optional ``out`` argument."""
 
-    ndim = getattr(domain, 'ndim', None)
-
-    # Preserve `None`, don't let `np.dtype` convert it to `float64`
+    ndim = domain.ndim
     if out_dtype is None:
-        val_shape = ()
-        scalar_out_dtype = None
-    else:
-        out_dtype = np.dtype(out_dtype)
-        val_shape = out_dtype.shape
-        scalar_out_dtype = out_dtype.base
+        # Don't let `np.dtype` convert `None` to `float64`
+        raise TypeError('`out_dtype` cannot be `None`')
+
+    out_dtype = np.dtype(out_dtype)
+    val_shape = out_dtype.shape
+    scalar_out_dtype = out_dtype.base
 
     tensor_valued = val_shape != ()
 
@@ -1152,33 +1109,34 @@ def _make_checked_dual_use_func(func_ip, func_oop, domain, out_dtype=None):
         This function closes over two other functions, one for in-place,
         the other for out-of-place evaluation. Its purpose is to unify their
         interfaces to a single one with optional ``out`` argument, and to
-        automate all details of broadcasting, checking and type casting.
+        automate all details of input/output checking, broadcasting and
+        type casting.
 
         The closure also contains ``domain``, an `IntervalProd` where points
-        should lie, and an optional ``out_dtype``.
+        should lie, and the expected ``out_dtype``.
+
+        For usage examples, see `point_collocation`.
 
         Parameters
         ----------
-        x : point, `numpy.ndarray` or `meshgrid`
+        x : point, `meshgrid` or `numpy.ndarray`
             Input argument for the function evaluation. Conditions
             on ``x`` depend on its type:
 
-            - point: must be a castable to an element of the enclosed
-              ``domain``.
+            - point: must be castable to an element of the enclosed ``domain``.
             - meshgrid: length must be ``domain.ndim``, and the arrays must
               be broadcastable against each other.
-            - ndarray: shape must be ``(ndim, N)``, where ``ndim`` equals
+            - array: shape must be ``(ndim, N)``, where ``ndim`` equals
               ``domain.ndim``.
 
         out : `numpy.ndarray`, optional
             Output argument holding the result of the function evaluation.
             Can only be used for vectorized functions. Its shape must be equal
             to ``out_dtype.shape + np.broadcast(*x).shape``.
-        bounds_check : bool
+        bounds_check : bool, optional
             If ``True``, check if all input points lie in ``domain``. This
             requires ``domain`` to implement `Set.contains_all`.
-            Default: ``True`` if ``out_dtype is not None``, ``False``
-            otherwise.
+            Default: ``True``
 
         Returns
         -------
@@ -1197,41 +1155,8 @@ def _make_checked_dual_use_func(func_ip, func_oop, domain, out_dtype=None):
         ValueError
             If ``bounds_check == True`` and some evaluation points fall
             outside the valid domain.
-
-        Examples
-        --------
-        In the following we have an ``ndim=2``-dimensional domain. The
-        following shows valid arrays and meshgrids for input:
-
-        >>> fspace = odl.FunctionSpace(odl.IntervalProd([0, 0], [1, 1]))
-        >>> func = fspace.element(lambda x: x[1] - x[0])
-        >>> # 3 evaluation points, given point per point, each of which
-        >>> # is contained in the function domain.
-        >>> points = [[0, 0],
-        ...           [0, 1],
-        ...           [0.5, 0.1]]
-        >>> # The array provided to `func` must be transposed since
-        >>> # the first axis must index the components of the points and
-        >>> # the second axis must enumerate them.
-        >>> array = np.array(points).T
-        >>> array.shape  # should be `ndim` x N
-        (2, 3)
-        >>> func(array)
-        array([ 0. ,  1. , -0.4])
-        >>> # A meshgrid is an `ndim`-long sequence of 1D Numpy arrays
-        >>> # containing the coordinates of the points. We use
-        >>> # 2 * 3 = 6 points here.
-        >>> comp0 = np.array([0.0, 1.0])  # first components
-        >>> comp1 = np.array([0.0, 0.5, 1.0])  # second components
-        >>> # The following adds extra dimensions to enable broadcasting.
-        >>> mesh = odl.discr.grid.sparse_meshgrid(comp0, comp1)
-        >>> len(mesh)  # should be `ndim`
-        2
-        >>> func(mesh)
-        array([[ 0. ,  0.5,  1. ],
-               [-1. , -0.5,  0. ]])
         """
-        bounds_check = kwargs.pop('bounds_check', out_dtype is not None)
+        bounds_check = kwargs.pop('bounds_check', True)
         if bounds_check and not hasattr(domain, 'contains_all'):
             raise AttributeError(
                 'bounds check not possible for domain {!r}, missing '
@@ -1343,10 +1268,7 @@ def _make_checked_dual_use_func(func_ip, func_oop, domain, out_dtype=None):
 
                     out_arr = np.array(bcast_res, dtype=scalar_out_dtype)
 
-                elif (
-                    scalar_out_dtype is not None and
-                    results.dtype != scalar_out_dtype
-                ):
+                elif results.dtype != scalar_out_dtype:
                     raise ValueError(
                         'result is of dtype {}, expected {}'
                         ''.format(dtype_repr(results.dtype),
@@ -1359,7 +1281,7 @@ def _make_checked_dual_use_func(func_ip, func_oop, domain, out_dtype=None):
                 out = out_arr.reshape(out_shape)
 
             else:
-                # TODO: improve message
+                # TODO(kohr-h): improve message
                 raise RuntimeError('bad output of function call')
 
         else:
@@ -1376,7 +1298,7 @@ def _make_checked_dual_use_func(func_ip, func_oop, domain, out_dtype=None):
                     'output has shape, expected {} from input'
                     ''.format(out.shape, out_shape)
                 )
-            if scalar_out_dtype is not None and out.dtype != scalar_out_dtype:
+            if out.dtype != scalar_out_dtype:
                 raise ValueError(
                     '`out` is of dtype {}, expected {}'
                     ''.format(out.dtype, scalar_out_dtype)
@@ -1397,9 +1319,7 @@ def _make_checked_dual_use_func(func_ip, func_oop, domain, out_dtype=None):
         # to __float__), so we have to fish out the scalar ourselves.
         if scalar_out:
             scalar = out.ravel()[0].item()
-            if scalar_out_dtype is None:
-                return scalar
-            elif is_real_dtype:
+            if is_real_dtype:
                 return float(scalar)
             else:
                 return complex(scalar)
