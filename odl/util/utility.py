@@ -1,4 +1,4 @@
-﻿# Copyright 2014-2018 The ODL contributors
+﻿# Copyright 2014-2019 The ODL contributors
 #
 # This file is part of ODL.
 #
@@ -13,7 +13,6 @@ from future.moves.itertools import zip_longest
 
 import inspect
 import sys
-from builtins import object
 from collections import OrderedDict
 from contextlib import contextmanager
 from itertools import product
@@ -188,6 +187,38 @@ def npy_printoptions(**extra_opts):
 
     finally:
         np.set_printoptions(**orig_opts)
+
+
+@contextmanager
+def npy_error_handling(**options):
+    """Context manager to temporarily set NumPy's error handling.
+
+    See Also
+    --------
+    numpy.geterr
+    numpy.seterr
+
+    Examples
+    --------
+    >>> np.array(1.0) / np.array(0.0)  # no error
+    inf
+    >>> with npy_error_handling(divide="raise"):
+    ...     try:
+    ...         np.array(1.0) / np.array(0.0)
+    ...     except FloatingPointError:
+    ...         print("Divide by zero!")
+    Divide by zero!
+    """
+    orig_dict = np.geterr()
+
+    try:
+        new_dict = orig_dict.copy()
+        new_dict.update(options)
+        np.seterr(**new_dict)
+        yield
+
+    finally:
+        np.seterr(**orig_dict)
 
 
 def array_str(a, nprint=6):

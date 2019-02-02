@@ -509,9 +509,9 @@ class DiscreteLp(TensorSpace):
             bdry_fracs = self.partition.boundary_cell_fractions
             func_list = _scaling_func_list(bdry_fracs, exponent=1.0)
             x_arr = apply_on_boundary(x, func=func_list, only_once=False)
-            return super(DiscreteLp, self)._inner(self.element(x_arr), y)
+            return self.tspace.inner(self.tspace.element(x_arr), y.tensor)
         else:
-            return super(DiscreteLp, self)._inner(x, y)
+            return self.tspace.inner(x.tensor, y.tensor)
 
     def _norm(self, x):
         """Return ``self.norm(x)``."""
@@ -520,9 +520,9 @@ class DiscreteLp(TensorSpace):
             bdry_fracs = self.partition.boundary_cell_fractions
             func_list = _scaling_func_list(bdry_fracs, exponent=self.exponent)
             x_arr = apply_on_boundary(x, func=func_list, only_once=False)
-            return super(DiscreteLp, self)._norm(self.element(x_arr))
+            return self.tspace.norm(self.tspace.element(x_arr))
         else:
-            return super(DiscreteLp, self)._norm(x)
+            return self.tspace.norm(x.tensor)
 
     def _dist(self, x, y):
         """Return ``self.dist(x, y)``."""
@@ -532,10 +532,12 @@ class DiscreteLp(TensorSpace):
             arrs = [apply_on_boundary(vec, func=func_list, only_once=False)
                     for vec in (x, y)]
 
-            return super(DiscreteLp, self)._dist(
-                self.element(arrs[0]), self.element(arrs[1]))
+            return self.tspace.dist(
+                self.tspace.element(arrs[0]),
+                self.tspace.element(arrs[1]),
+            )
         else:
-            return super(DiscreteLp, self)._dist(x, y)
+            return self.tspace.dist(x.tensor, y.tensor)
 
     def __repr__(self):
         """Return ``repr(self)``."""

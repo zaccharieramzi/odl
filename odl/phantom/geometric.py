@@ -13,6 +13,7 @@ import numpy as np
 
 from odl.discr.lp_discr import uniform_discr_fromdiscr
 from odl.util.numerics import resize_array
+from odl.util.utility import npy_error_handling
 
 __all__ = ('cuboid', 'defrise', 'ellipsoid_phantom', 'indicate_proj_axis',
            'smooth_cuboid', 'tgv_phantom')
@@ -810,7 +811,8 @@ def tgv_phantom(space, edge_smoothing=0.2):
     def sigmoid(val):
         if edge_smoothing != 0:
             val = val / scale
-            return 1 / (1 + np.exp(-val))
+            with npy_error_handling(over="ignore", under="ignore"):
+                return 1 / (1 + np.exp(-val))
         else:
             return (val > 0).astype(val.dtype)
 

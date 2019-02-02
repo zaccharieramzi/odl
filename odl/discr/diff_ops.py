@@ -1,4 +1,4 @@
-﻿# Copyright 2014-2017 The ODL contributors
+﻿# Copyright 2014-2019 The ODL contributors
 #
 # This file is part of ODL.
 #
@@ -99,7 +99,7 @@ class PartialDerivative(PointwiseTensorFieldOperator):
         >>> f = np.array([[ 0.,  1.,  2.,  3.,  4.],
         ...               [ 0.,  2.,  4.,  6.,  8.]])
         >>> discr = odl.uniform_discr([0, 0], [2, 1], f.shape)
-        >>> par_deriv = PartialDerivative(discr, axis=0, pad_mode='order1')
+        >>> par_deriv = odl.PartialDerivative(discr, axis=0, pad_mode='order1')
         >>> par_deriv(f)
         uniform_discr([ 0.,  0.], [ 2.,  1.], (2, 5)).element(
             [[ 0.,  1.,  2.,  3.,  4.],
@@ -253,13 +253,13 @@ class Gradient(PointwiseTensorFieldOperator):
 
         >>> dom = odl.uniform_discr([0, 0], [1, 1], (10, 20))
         >>> ran = odl.ProductSpace(dom, dom.ndim)  # 2-dimensional
-        >>> grad_op = Gradient(dom)
+        >>> grad_op = odl.Gradient(dom)
         >>> grad_op.range == ran
         True
-        >>> grad_op2 = Gradient(range=ran)
+        >>> grad_op2 = odl.Gradient(range=ran)
         >>> grad_op2.domain == dom
         True
-        >>> grad_op3 = Gradient(domain=dom, range=ran)
+        >>> grad_op3 = odl.Gradient(domain=dom, range=ran)
         >>> grad_op3.domain == dom
         True
         >>> grad_op3.range == ran
@@ -271,7 +271,7 @@ class Gradient(PointwiseTensorFieldOperator):
         ...                  [ 0., 2., 4., 6., 8.]])
         >>> discr = odl.uniform_discr([0, 0], [2, 5], data.shape)
         >>> f = discr.element(data)
-        >>> grad = Gradient(discr)
+        >>> grad = odl.Gradient(discr)
         >>> grad_f = grad(f)
         >>> grad_f[0]
         uniform_discr([ 0.,  0.], [ 2.,  5.], (2, 5)).element(
@@ -475,13 +475,13 @@ class Divergence(PointwiseTensorFieldOperator):
 
         >>> ran = odl.uniform_discr([0, 0], [3, 5], (3, 5))
         >>> dom = odl.ProductSpace(ran, ran.ndim)  # 2-dimensional
-        >>> div = Divergence(dom)
+        >>> div = odl.Divergence(dom)
         >>> div.range == ran
         True
-        >>> div2 = Divergence(range=ran)
+        >>> div2 = odl.Divergence(range=ran)
         >>> div2.domain == dom
         True
-        >>> div3 = Divergence(domain=dom, range=ran)
+        >>> div3 = odl.Divergence(domain=dom, range=ran)
         >>> div3.domain == dom
         True
         >>> div3.range == ran
@@ -677,7 +677,7 @@ class Laplacian(PointwiseTensorFieldOperator):
         ...                  [ 0., 0., 0.]])
         >>> space = odl.uniform_discr([0, 0], [3, 3], [3, 3])
         >>> f = space.element(data)
-        >>> lap = Laplacian(space)
+        >>> lap = odl.Laplacian(space)
         >>> lap(f)
         uniform_discr([ 0.,  0.], [ 3.,  3.], (3, 3)).element(
             [[ 0.,  1.,  0.],
