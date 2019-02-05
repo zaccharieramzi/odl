@@ -83,7 +83,6 @@ def point_collocation(func, points, out=None, **kwargs):
 
     >>> mesh = np.meshgrid([-1, 0, 4])
     >>> point_collocation(func, mesh, bounds_check=False)
-
     array([  1.,   0.,  16.])
 
     In two or more dimensions, the function to be sampled can be written as
@@ -128,10 +127,10 @@ def point_collocation(func, points, out=None, **kwargs):
     >>> point_collocation(func1, mesh)
     array([[[ 0.,  0.],
             [ 1.,  1.]],
-
+    <BLANKLINE>
            [[ 0.,  0.],
             [ 0.,  0.]],
-
+    <BLANKLINE>
            [[ 4.,  5.],
             [ 5.,  6.]]])
     >>> array_of_funcs = [  # equivalent to `vec_valued`
@@ -144,16 +143,16 @@ def point_collocation(func, points, out=None, **kwargs):
     >>> point_collocation(func2, mesh)
     array([[[ 0.,  0.],
             [ 1.,  1.]],
-
+    <BLANKLINE>
            [[ 0.,  0.],
             [ 0.,  0.]],
-
+    <BLANKLINE>
            [[ 4.,  5.],
             [ 5.,  6.]]])
 
     Notes
     -----
-    This operator expects its input functions to be written in a
+    This function expects its input functions to be written in a
     vectorization-conforming manner to ensure fast evaluation.
     See the `ODL vectorization guide`_ for a detailed introduction.
 
@@ -201,69 +200,84 @@ def _all_interp_equal(interp_byaxis):
     return all(itp == interp_byaxis[0] for itp in interp_byaxis)
 
 
-# TODO: fix docs
-def nearest_interpolator(x, coord_vecs, variant='left'):
+def nearest_interpolator(f, coord_vecs, variant='left'):
     """Nearest neighbor interpolation.
 
-    Given points ``x[1] < x[2] < ... < x[N]``, and values ``f[1], ..., f[N]``,
-    nearest neighbor interpolation at ``x`` is defined as ::
+    Given points ``x[1] < x[2] < ... < x[N]``, and function values
+    ``f[1], ..., f[N]``, nearest neighbor interpolation at ``x`` is defined
+    as ::
 
         I(x) = f[j]  with j such that |x - x[j]| is minimal.
 
     The ambiguity at the midpoints is resolved by preferring one of the
-    neighbors. For higher dimensions, this rule is applied per
-    component.
+    neighbors. In higher dimensions, this principle is applied per axis.
 
-    The returned interpolator is the function ``x -> I(x)``.
-
-    In higher dimensions, this principle is applied per axis, the
-    only difference being the additional information about the ordering
-    of the axes in the flat storage array (C- vs. Fortran ordering).
+    The returned interpolator is the piecewise constant function ``x -> I(x)``.
 
     Parameters
     ----------
+    f : numpy.ndarray
+        Function values that should be interpolated.
+    coord_vecs : sequence of numpy.ndarray
+        Coordinate vectors of the rectangular grid on which interpolation
+        should be based. They must be sorted in ascending order. Usually
+        they are obtained as ``grid.coord_vectors`` from a `RectGrid`.
     variant : {'left', 'right'}, optional
-        Behavior variant at the midpoint between neighbors.
-
-        - ``'left'``: favor left neighbor (default).
-        - ``'right'``: favor right neighbor.
+        Which neighbor to prefer at the midpoint between two nodes.
 
     Examples
     --------
-    We test nearest neighbor interpolation with a non-scalar
-    data type in 2d:
+    We interpolate a 1d function. If called with a single point, the
+    interpolator returns a single value, and with multiple points at once,
+    an array of values is returned:
 
-    >>> rect = odl.IntervalProd([0, 0], [1, 1])
-    >>> fspace = odl.FunctionSpace(rect, out_dtype='U1')
+    >>> part = odl.uniform_partition(0, 2, 5)
+    >>> part.coord_vectors  # grid points
+    (array([ 0.2,  0.6,  1. ,  1.4,  1.8]),)
+    >>> f = [1, 2, 3, 4, 5]
+    >>> interpolator = nearest_interpolator(f, part.coord_vectors)
+    >>> interpolator(0.3)  # closest to 0.2 -> value 1
+    1
+    >>> interpolator([0.6, 1.3, 1.9])  # closest to [0.6, 1.4, 1.8]
+    array([2, 4, 5])
 
-    Partitioning the domain uniformly with no nodes on the boundary
-    (will shift the grid points):
+    In 2 dimensions, we can either use a list of points or a meshgrid:
 
-    >>> part = odl.uniform_partition_fromintv(rect, [4, 2])
-    >>> part.grid.coord_vectors
-    (array([ 0.125,  0.375,  0.625,  0.875]), array([ 0.25,  0.75]))
+    >>> part = odl.uniform_partition([0, 0], [1, 5], shape=(2, 4))
+    >>> part.coord_vectors  # grid points
+    (array([ 0.25,  0.75]), array([ 0.625,  1.875,  3.125,  4.375]))
+    >>> f = np.array([[1, 2, 3, 4],
+    ...               [5, 6, 7, 8]],
+    ...              dtype=float)
+    >>> interpolator = nearest_interpolator(f, part.coord_vectors)
+    >>> interpolator([1, 1])  # single point
+    5.0
+    >>> interpolator([[0.5, 2.0],
+    ...               [0.0, 4.5],
+    ...               [0.0, 3.0]])  # 3 points at once
+    array([ 4.,  5.,  3.])
+    >>> from odl.discr.grid import sparse_meshgrid
+    >>> mesh = sparse_meshgrid([0.0, 0.5, 1.0], [1.5, 3.5])
+    >>> interpolator(mesh)  # 3x2 grid of points
+    array([[ 2.,  3.],
+           [ 2.,  3.],
+           [ 6.,  7.]])
 
-    Now we initialize the operator and test it with some points:
+    With nearest neighbor interpolation, we can also use non-scalar data
+    types like strings:
 
-    >>> tspace = odl.tensor_space(part.shape, dtype='U1')
-    >>> interp_op = NearestInterpolation(fspace, part, tspace)
-    >>> values = np.array([['m', 'y'],
-    ...                    ['s', 't'],
-    ...                    ['r', 'i'],
-    ...                    ['n', 'g']])
-    >>> function = interp_op(values)
-    >>> print(function([0.3, 0.6]))  # closest to index (1, 1) -> 3
+    >>> part = odl.uniform_partition(0, 3, 6)
+    >>> part.coord_vectors  # grid points
+    (array([ 0.25,  0.75,  1.25,  1.75,  2.25,  2.75]),)
+    >>> f = ['s', 't', 'r', 'i', 'n', 'g']
+    >>> interpolator = nearest_interpolator(f, part.coord_vectors)
+    >>> print(interpolator(1.0))
     t
-    >>> out = np.empty(2, dtype='U1')
-    >>> pts = np.array([[0.3, 0.6],
-    ...                 [1.0, 1.0]])
-    >>> out = function(pts.T, out=out)  # returns original out
-    >>> all(out == ['t', 'g'])
-    True
 
     See Also
     --------
-    LinearInterpolation : (bi-/tri-/...)linear interpolation
+    linear_interpolator : (bi-/tri-/...)linear interpolation
+    per_axis_interpolator : potentially different interpolation in each axis
 
     Notes
     -----
@@ -279,17 +293,19 @@ def nearest_interpolator(x, coord_vecs, variant='left'):
       may not be noticable in some situations due to rounding errors.
 
     """
+    f = np.asarray(f)
+
     # TODO(kohr-h): pass reasonable options on to the interpolator
     def nearest_interp(arg, out=None):
         """Interpolating function with vectorization."""
-        if is_valid_input_meshgrid(arg, x.ndim):
+        if is_valid_input_meshgrid(arg, f.ndim):
             input_type = 'meshgrid'
         else:
             input_type = 'array'
 
         interpolator = _NearestInterpolator(
             coord_vecs,
-            x,
+            f,
             variant=variant,
             input_type=input_type
         )
@@ -299,7 +315,7 @@ def nearest_interpolator(x, coord_vecs, variant='left'):
     return nearest_interp
 
 
-# TODO: doc
+# TODO(kohr-h): doc
 def linear_interpolator(x, coord_vecs):
     """
 
@@ -310,7 +326,7 @@ def linear_interpolator(x, coord_vecs):
     coord_vecs :
 
     """
-    # TODO: pass reasonable options on to the interpolator
+    # TODO(kohr-h): pass reasonable options on to the interpolator
     def linear_interp(arg, out=None):
         """Interpolating function with vectorization."""
         if is_valid_input_meshgrid(arg, x.ndim):
@@ -480,8 +496,15 @@ scipy.interpolate.RegularGridInterpolator.html>`_ class.
             Interpolated values. If ``out`` was given, the returned
             object is a reference to it.
         """
+        x = np.asarray(x)
         ndim = len(self.coord_vecs)
+        scalar_out = False
+
         if self.input_type == 'array':
+            if ndim == 1:
+                scalar_out = x.ndim == 0
+            else:
+                scalar_out = x.shape == (ndim,)
             # Make a (1, n) array from one with shape (n,)
             x = x.reshape([ndim, -1])
             out_shape = out_shape_from_array(x)
@@ -505,7 +528,11 @@ scipy.interpolate.RegularGridInterpolator.html>`_ class.
                                  ''.format(out.dtype, self.values.dtype))
 
         indices, norm_distances = self._find_indices(x)
-        return self._evaluate(indices, norm_distances, out)
+        values = self._evaluate(indices, norm_distances, out)
+        if scalar_out:
+            return values.item()
+        else:
+            return values
 
     def _find_indices(self, x):
         """Find indices and distances of the given nodes.
