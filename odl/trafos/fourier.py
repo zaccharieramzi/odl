@@ -59,8 +59,8 @@ class DiscreteFourierTransformBase(Operator):
         range : `DiscreteLp`, optional
             Range of the Fourier transform. If not given, the range
             is determined from ``domain`` and the other parameters as
-            a `discr_sequence_space` with exponent ``p / (p - 1)``
-            (read as 'inf' for p=1 and 1 for p='inf').
+            a `uniform_discr` with exponent unit cell size and exponent
+            ``p / (p - 1)`` (read as 'inf' for p=1 and 1 for p='inf').
         axes : int or sequence of ints, optional
             Dimensions in which a transform is to be calculated. ``None``
             means all axes.
@@ -394,8 +394,8 @@ class DiscreteFourierTransform(DiscreteFourierTransformBase):
         range : `DiscreteLp`, optional
             Range of the Fourier transform. If not given, the range
             is determined from ``domain`` and the other parameters as
-            a `discr_sequence_space` with exponent ``p / (p - 1)``
-            (read as 'inf' for p=1 and 1 for p='inf').
+            a `uniform_discr` with exponent unit cell size and exponent
+            ``p / (p - 1)`` (read as 'inf' for p=1 and 1 for p='inf').
         axes : int or sequence of ints, optional
             Dimensions in which a transform is to be calculated. ``None``
             means all axes.
@@ -419,7 +419,8 @@ class DiscreteFourierTransform(DiscreteFourierTransformBase):
         Complex-to-complex (default) transforms have the same grids
         in domain and range:
 
-        >>> domain = discr_sequence_space((2, 4))
+        >>> domain = odl.uniform_discr([0, 0], [2, 4], (2, 4),
+        ...                            nodes_on_bdry=True)
         >>> fft = DiscreteFourierTransform(domain)
         >>> fft.domain.shape
         (2, 4)
@@ -429,7 +430,8 @@ class DiscreteFourierTransform(DiscreteFourierTransformBase):
         Real-to-complex transforms have a range grid with shape
         ``n // 2 + 1`` in the last tranform axis:
 
-        >>> domain = discr_sequence_space((2, 3, 4), dtype='float')
+        >>> domain = odl.uniform_discr([0, 0, 0], [2, 3, 4], (2, 3, 4),
+        ...                            nodes_on_bdry=True)
         >>> axes = (0, 1)
         >>> fft = DiscreteFourierTransform(
         ...     domain, halfcomplex=True, axes=axes)
@@ -544,9 +546,9 @@ class DiscreteFourierTransformInverse(DiscreteFourierTransformBase):
             an adjoint which is equal to the inverse.
         domain : `DiscreteLp`, optional
             Domain of the inverse Fourier transform. If not given, the
-            domain is determined from ``range`` and the other parameters
-            as a `discr_sequence_space` with exponent ``p / (p - 1)``
-            (read as 'inf' for p=1 and 1 for p='inf').
+            domain is determined from ``range`` and the other parameters as
+            a `uniform_discr` with exponent unit cell size and exponent
+            ``p / (p - 1)`` (read as 'inf' for p=1 and 1 for p='inf').
         axes : sequence of ints, optional
             Dimensions in which a transform is to be calculated. `None`
             means all axes.
@@ -570,8 +572,9 @@ class DiscreteFourierTransformInverse(DiscreteFourierTransformBase):
         Complex-to-complex (default) transforms have the same grids
         in domain and range:
 
-        >>> range_ = discr_sequence_space((2, 4))
-        >>> ifft = DiscreteFourierTransformInverse(range_)
+        >>> range = odl.uniform_discr([0, 0], [2, 4], (2, 4),
+        ...                           nodes_on_bdry=True)
+        >>> ifft = DiscreteFourierTransformInverse(range)
         >>> ifft.domain.shape
         (2, 4)
         >>> ifft.range.shape
@@ -580,10 +583,11 @@ class DiscreteFourierTransformInverse(DiscreteFourierTransformBase):
         Complex-to-real transforms have a domain grid with shape
         ``n // 2 + 1`` in the last tranform axis:
 
-        >>> range_ = discr_sequence_space((2, 3, 4), dtype='float')
+        >>> range = odl.uniform_discr([0, 0, 0], [2, 3, 4], (2, 3, 4),
+        ...                           nodes_on_bdry=True)
         >>> axes = (0, 1)
         >>> ifft = DiscreteFourierTransformInverse(
-        ...     range_, halfcomplex=True, axes=axes)
+        ...     range, halfcomplex=True, axes=axes)
         >>> ifft.domain.shape   # shortened in the second axis
         (2, 2, 4)
         >>> ifft.range.shape
