@@ -14,6 +14,7 @@ import odl
 from odl.discr.grid import sparse_meshgrid
 from odl.set.domain import IntervalProd
 from odl.util.testutils import all_equal
+from odl.util.utility import npy_error_handling
 
 
 def random_point(set_):
@@ -239,12 +240,13 @@ def test_contains_set():
                     IntervalProd(1.2, 1.2)]:
         assert set_.contains_set(sub_set)
 
-    for non_sub_set in [np.array([0, 1, 1.1, 1.2, 1.3, 1.4]),
-                        np.array([np.nan, 1.1, 1.3]),
-                        IntervalProd(1.2, 3),
-                        IntervalProd(0, 1.5),
-                        IntervalProd(3, 4)]:
-        assert not set_.contains_set(non_sub_set)
+    with npy_error_handling(invalid="ignore"):
+        for non_sub_set in [np.array([0, 1, 1.1, 1.2, 1.3, 1.4]),
+                            np.array([np.nan, 1.1, 1.3]),
+                            IntervalProd(1.2, 3),
+                            IntervalProd(0, 1.5),
+                            IntervalProd(3, 4)]:
+            assert not set_.contains_set(non_sub_set)
 
     for non_set in [1,
                     [1, 2],
