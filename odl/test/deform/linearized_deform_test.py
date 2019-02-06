@@ -27,7 +27,7 @@ ndim = simple_fixture('ndim', [1, 2, 3])
 
 
 @pytest.fixture
-def space(request, ndim, interp, dtype, odl_tspace_impl):
+def space(request, ndim, dtype, odl_tspace_impl):
     """Example space.
 
     Generates example spaces with various implementations, dimensions, dtypes
@@ -38,8 +38,9 @@ def space(request, ndim, interp, dtype, odl_tspace_impl):
     if np.dtype(dtype) not in supported_dtypes:
         pytest.skip('dtype not available for this backend')
 
-    return odl.uniform_discr([-1] * ndim, [1] * ndim, [20] * ndim,
-                             interp=interp, impl=impl, dtype=dtype)
+    return odl.uniform_discr(
+        [-1] * ndim, [1] * ndim, [20] * ndim, impl=impl, dtype=dtype
+    )
 
 
 # --- Helper functions --- #
@@ -174,12 +175,12 @@ def test_fixed_templ_init():
         LinDeformFixedTempl(template_function)
 
 
-def test_fixed_templ_call(space):
+def test_fixed_templ_call(space, interp):
     """Test deformation for LinDeformFixedTempl."""
 
     # Define the analytic template as the hat function and its gradient
     template = space.element(template_function)
-    deform_op = LinDeformFixedTempl(template)
+    deform_op = LinDeformFixedTempl(template, interp=interp)
 
     # Calculate result and exact result
     true_deformed_templ = space.element(deformed_template)
@@ -188,10 +189,10 @@ def test_fixed_templ_call(space):
     # Verify that the result is within error limits
     error = (true_deformed_templ - deformed_templ).norm()
     rlt_err = error / deformed_templ.norm()
-    assert rlt_err < error_bound(space.interp)
+    assert rlt_err < error_bound(interp)
 
 
-def test_fixed_templ_deriv(space):
+def test_fixed_templ_deriv(space, interp):
     if not space.is_real:
         pytest.skip('derivative not implemented for complex dtypes')
 
@@ -199,7 +200,7 @@ def test_fixed_templ_deriv(space):
     template = space.element(template_function)
     disp_field = disp_field_factory(space.ndim)
     vector_field = vector_field_factory(space.ndim)
-    fixed_templ_op = LinDeformFixedTempl(template)
+    fixed_templ_op = LinDeformFixedTempl(template, interp=interp)
 
     # Calculate result
     fixed_templ_op_deriv = fixed_templ_op.derivative(disp_field)
@@ -211,7 +212,7 @@ def test_fixed_templ_deriv(space):
     # Verify that the result is within error limits
     error = (fixed_templ_deriv_exact - fixed_templ_deriv_comp).norm()
     rlt_err = error / fixed_templ_deriv_comp.norm()
-    assert rlt_err < error_bound(space.interp)
+    assert rlt_err < error_bound(interp)
 
 
 # --- LinDeformFixedDisp --- #
@@ -248,24 +249,26 @@ def test_fixed_disp_init():
         LinDeformFixedDisp(disp_field, bad_space)
 
 
-def test_fixed_disp_call(space):
+def test_fixed_disp_call(space, interp):
     """Verify that LinDeformFixedDisp produces the correct deformation."""
     template = space.element(template_function)
     disp_field = space.real_space.tangent_bundle.element(
-        disp_field_factory(space.ndim))
+        disp_field_factory(space.ndim)
+    )
 
     # Calculate result and exact result
-    deform_op = LinDeformFixedDisp(disp_field, templ_space=space)
+    deform_op = LinDeformFixedDisp(disp_field, templ_space=space,
+                                   interp=interp)
     deformed_templ = deform_op(template)
     true_deformed_templ = space.element(deformed_template)
 
     # Verify that the result is within error limits
     error = (true_deformed_templ - deformed_templ).norm()
     rlt_err = error / deformed_templ.norm()
-    assert rlt_err < error_bound(space.interp)
+    assert rlt_err < error_bound(interp)
 
 
-def test_fixed_disp_inv(space):
+def test_fixed_disp_inv(space, interp):
     """Verify that the inverse of LinDeformFixedDisp is correct."""
     # Set up template and displacement field
     template = space.element(template_function)
@@ -273,20 +276,21 @@ def test_fixed_disp_inv(space):
         disp_field_factory(space.ndim))
 
     # Verify that the inverse is in fact a (left and right) inverse
-    deform_op = LinDeformFixedDisp(disp_field, templ_space=space)
+    deform_op = LinDeformFixedDisp(disp_field, templ_space=space,
+                                   interp=interp)
 
     result_op_inv = deform_op(deform_op.inverse(template))
     error = (result_op_inv - template).norm()
     rel_err = error / template.norm()
-    assert rel_err < 2 * error_bound(space.interp)  # need a bit more tolerance
+    assert rel_err < 2 * error_bound(interp)  # need a bit more tolerance
 
     result_inv_op = deform_op.inverse(deform_op(template))
     error = (result_inv_op - template).norm()
     rel_err = error / template.norm()
-    assert rel_err < 2 * error_bound(space.interp)  # need a bit more tolerance
+    assert rel_err < 2 * error_bound(interp)  # need a bit more tolerance
 
 
-def test_fixed_disp_adj(space):
+def test_fixed_disp_adj(space, interp):
     """Verify that the adjoint of LinDeformFixedDisp is correct."""
     # Set up template and displacement field
     template = space.element(template_function)
@@ -294,7 +298,8 @@ def test_fixed_disp_adj(space):
         disp_field_factory(space.ndim))
 
     # Calculate result
-    deform_op = LinDeformFixedDisp(disp_field, templ_space=space)
+    deform_op = LinDeformFixedDisp(disp_field, templ_space=space,
+                                   interp=interp)
     deformed_templ_adj = deform_op.adjoint(template)
 
     # Calculate the analytic result
@@ -305,7 +310,7 @@ def test_fixed_disp_adj(space):
     # Verify that the result is within error limits
     error = (deformed_templ_adj - true_deformed_templ_adj).norm()
     rel_err = error / true_deformed_templ_adj.norm()
-    assert rel_err < error_bound(space.interp)
+    assert rel_err < error_bound(interp)
 
     # Verify the adjoint definition <Ax, x> = <x, A^* x>
     deformed_templ = deform_op(template)
