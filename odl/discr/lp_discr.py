@@ -68,6 +68,11 @@ class DiscreteLp(TensorSpace):
         if not isinstance(tspace, TensorSpace):
             raise TypeError('`tspace` must be a `TensorSpace`, got {!r}'
                             ''.format(tspace))
+        if partition.shape != tspace.shape:
+            raise ValueError(
+                '`partition.shape` must be equal to `tspace.shape`, but '
+                '{} != {}'.format(partition.shape, tspace.shape)
+            )
 
         self.__tspace = tspace
         self.__partition = partition
