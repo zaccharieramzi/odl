@@ -1,4 +1,4 @@
-# Copyright 2014-2018 The ODL contributors
+# Copyright 2014-2019 The ODL contributors
 #
 # This file is part of ODL.
 #
@@ -14,7 +14,7 @@ from numbers import Integral
 
 import numpy as np
 
-from odl.discr.discr_utils import point_collocation, make_vec_func_for_sampling
+from odl.discr.discr_utils import make_vec_func_for_sampling, point_collocation
 from odl.discr.partition import (
     RectPartition, uniform_partition, uniform_partition_fromintv)
 from odl.set import IntervalProd, RealNumbers
