@@ -1,4 +1,4 @@
-﻿# Copyright 2014-2017 The ODL contributors
+# Copyright 2014-2019 The ODL contributors
 #
 # This file is part of ODL.
 #
@@ -7,14 +7,15 @@
 # obtain one at https://mozilla.org/MPL/2.0/.
 
 from __future__ import division
+
+from functools import partial
+
 import numpy as np
-import pytest
 
 import odl
-from odl import FunctionSpace
+from odl.discr.discr_utils import point_collocation
 from odl.discr.grid import sparse_meshgrid
 from odl.util.testutils import all_almost_equal, all_equal, simple_fixture
-
 
 # --- Helper functions --- #
 
@@ -71,16 +72,6 @@ out_dtype = simple_fixture('out_dtype', out_dtype_params,
 out_shape = simple_fixture('out_shape', [(), (2,), (2, 3)])
 domain_ndim = simple_fixture('domain_ndim', [1, 2])
 vectorized = simple_fixture('vectorized', [True, False])
-a = simple_fixture('a', [0.0, 1.0, -2.0])
-b = simple_fixture('b', [0.0, 1.0, -2.0])
-power = simple_fixture('power', [3, 1.0, 0.5, -2.0])
-
-
-@pytest.fixture(scope='module')
-def fspace_scal(domain_ndim, out_dtype):
-    """Fixture returning a function space with given properties."""
-    domain = odl.IntervalProd([0] * domain_ndim, [1] * domain_ndim)
-    return FunctionSpace(domain, out_dtype=out_dtype)
 
 
 # --- pytest fixtures (scalar test functions) --- #
@@ -373,133 +364,16 @@ def func_tens_complex_oop(x):
             [1j, x, sum(x) + 1j]]
 
 
-# --- FunctionSpace tests --- #
-
-
-def test_fspace_init():
-    """Check if all initialization patterns work."""
-    intv = odl.IntervalProd(0, 1)
-    FunctionSpace(intv)
-    FunctionSpace(intv, out_dtype=float)
-    FunctionSpace(intv, out_dtype=complex)
-    FunctionSpace(intv, out_dtype=(float, (2, 3)))
-
-    str3 = odl.Strings(3)
-    FunctionSpace(str3, out_dtype=int)
-
-    # Make sure repr shows something
-    assert repr(FunctionSpace(intv, out_dtype=(float, (2, 3))))
-
-
-def test_fspace_attributes():
-    """Check attribute access and correct values."""
-    intv = odl.IntervalProd(0, 1)
-
-    # Scalar-valued function spaces
-    fspace = FunctionSpace(intv)
-    fspace_r = FunctionSpace(intv, out_dtype=float)
-    fspace_c = FunctionSpace(intv, out_dtype=complex)
-    fspace_s = FunctionSpace(intv, out_dtype='U1')
-    scalar_spaces = (fspace, fspace_r, fspace_c, fspace_s)
-
-    assert fspace.domain == intv
-    assert fspace.field == odl.RealNumbers()
-    assert fspace_r.field == odl.RealNumbers()
-    assert fspace_c.field == odl.ComplexNumbers()
-    assert fspace_s.field is None
-
-    assert fspace.out_dtype == float
-    assert fspace_r.out_dtype == float
-    assert fspace_r.real_out_dtype == float
-    assert fspace_r.complex_out_dtype == complex
-    assert fspace_c.out_dtype == complex
-    assert fspace_c.real_out_dtype == float
-    assert fspace_c.complex_out_dtype == complex
-    assert fspace_s.out_dtype == np.dtype('U1')
-    assert fspace.is_real
-    assert not fspace.is_complex
-    assert fspace_r.is_real
-    assert not fspace_r.is_complex
-    assert fspace_c.is_complex
-    assert not fspace_c.is_real
-    with pytest.raises(AttributeError):
-        fspace_s.real_out_dtype
-    with pytest.raises(AttributeError):
-        fspace_s.complex_out_dtype
-
-    assert all(spc.scalar_out_dtype == spc.out_dtype for spc in scalar_spaces)
-    assert all(spc.out_shape == () for spc in scalar_spaces)
-    assert all(not spc.tensor_valued for spc in scalar_spaces)
-
-    # Vector-valued function space
-    fspace_vec = FunctionSpace(intv, out_dtype=(float, (2,)))
-    assert fspace_vec.field == odl.RealNumbers()
-    assert fspace_vec.out_dtype == np.dtype((float, (2,)))
-    assert fspace_vec.scalar_out_dtype == float
-    assert fspace_vec.out_shape == (2,)
-    assert fspace_vec.tensor_valued
-
-
-def test_equals():
-    """Test equality check and hash."""
-    intv = odl.IntervalProd(0, 1)
-    intv2 = odl.IntervalProd(-1, 1)
-    fspace = FunctionSpace(intv)
-    fspace_r = FunctionSpace(intv, out_dtype=float)
-    fspace_c = FunctionSpace(intv, out_dtype=complex)
-    fspace_intv2 = FunctionSpace(intv2)
-    fspace_vec = FunctionSpace(intv, out_dtype=(float, (2,)))
-
-    _test_eq(fspace, fspace)
-    _test_eq(fspace, fspace_r)
-    _test_eq(fspace_c, fspace_c)
-
-    _test_neq(fspace, fspace_c)
-    _test_neq(fspace, fspace_intv2)
-    _test_neq(fspace_r, fspace_vec)
-
-
-def test_fspace_astype():
-    """Check that converting function spaces to new out_dtype works."""
-    rspace = FunctionSpace(odl.IntervalProd(0, 1))
-    cspace = FunctionSpace(odl.IntervalProd(0, 1), out_dtype=complex)
-    rspace_s = FunctionSpace(odl.IntervalProd(0, 1), out_dtype='float32')
-    cspace_s = FunctionSpace(odl.IntervalProd(0, 1), out_dtype='complex64')
-
-    assert rspace.astype('complex64') == cspace_s
-    assert rspace.astype('complex128') == cspace
-    assert rspace.astype('complex128') is rspace.complex_space
-    assert rspace.astype('float32') == rspace_s
-    assert rspace.astype('float64') is rspace.real_space
-
-    assert cspace.astype('float32') == rspace_s
-    assert cspace.astype('float64') == rspace
-    assert cspace.astype('float64') is cspace.real_space
-    assert cspace.astype('complex64') == cspace_s
-    assert cspace.astype('complex128') is cspace.complex_space
-
-
 # --- FunctionSpaceElement tests --- #
 
 
-def test_fspace_elem_vectorized_init(vectorized):
-    """Check init of fspace elements with(out) vectorization."""
-    intv = odl.IntervalProd(0, 1)
-
-    fspace_scal = FunctionSpace(intv)
-    fspace_scal.element(func_nd_oop, vectorized=vectorized)
-
-    fspace_vec = FunctionSpace(intv, out_dtype=(float, (2,)))
-    fspace_vec.element(func_vec_nd_oop, vectorized=vectorized)
-    fspace_vec.element(func_nd_oop_seq, vectorized=vectorized)
-
-
-def test_fspace_scal_elem_eval(fspace_scal, func_nd):
+def test_point_collocation_scalar(domain_ndim, out_dtype, func_nd):
     """Check evaluation of scalar-valued function elements."""
-    points = _points(fspace_scal.domain, 3)
-    mesh_shape = tuple(range(2, 2 + fspace_scal.domain.ndim))
-    mesh = _meshgrid(fspace_scal.domain, mesh_shape)
-    point = [0.5] * fspace_scal.domain.ndim
+    domain = odl.IntervalProd([0] * domain_ndim, [1] * domain_ndim)
+    points = _points(domain, 3)
+    mesh_shape = tuple(range(2, 2 + domain_ndim))
+    mesh = _meshgrid(domain, mesh_shape)
+    point = [0.5] * domain_ndim
 
     func_ref, func = func_nd
 
@@ -507,28 +381,26 @@ def test_fspace_scal_elem_eval(fspace_scal, func_nd):
     true_values_mesh = func_ref(mesh)
     true_value_point = func_ref(point)
 
-    func_elem = fspace_scal.element(func)
+    collocator = partial(point_collocation, func)
 
     # Out of place
-    result_points = func_elem(points)
-    result_mesh = func_elem(mesh)
+    result_points = collocator(points)
+    result_mesh = collocator(mesh)
     assert all_almost_equal(result_points, true_values_points)
     assert all_almost_equal(result_mesh, true_values_mesh)
-    assert result_points.dtype == fspace_scal.scalar_out_dtype
-    assert result_mesh.dtype == fspace_scal.scalar_out_dtype
     assert result_points.flags.writeable
     assert result_mesh.flags.writeable
 
     # In place
-    out_points = np.empty(3, dtype=fspace_scal.scalar_out_dtype)
-    out_mesh = np.empty(mesh_shape, dtype=fspace_scal.scalar_out_dtype)
-    func_elem(points, out=out_points)
-    func_elem(mesh, out=out_mesh)
+    out_points = np.empty(3, dtype=out_dtype)
+    out_mesh = np.empty(mesh_shape, dtype=out_dtype)
+    collocator(points, out=out_points)
+    collocator(mesh, out=out_mesh)
     assert all_almost_equal(out_points, true_values_points)
     assert all_almost_equal(out_mesh, true_values_mesh)
 
     # Single point evaluation
-    result_point = func_elem(point)
+    result_point = collocator(point)
     assert all_almost_equal(result_point, true_value_point)
 
 
@@ -722,460 +594,6 @@ def test_fspace_elem_eval_vec_1d(func_vec_1d):
     assert all_almost_equal(out_mesh, true_result_mesh)
     assert all_almost_equal(out_point1, true_result_point)
     assert all_almost_equal(out_point2, true_result_point)
-
-
-def test_fspace_elem_equality():
-    """Test equality check of fspace elements."""
-    intv = odl.IntervalProd(0, 1)
-    fspace = FunctionSpace(intv)
-
-    f_novec = fspace.element(func_nd_oop, vectorized=False)
-
-    f_vec_oop = fspace.element(func_nd_oop, vectorized=True)
-    f_vec_oop_2 = fspace.element(func_nd_oop, vectorized=True)
-
-    f_vec_ip = fspace.element(func_nd_ip, vectorized=True)
-    f_vec_ip_2 = fspace.element(func_nd_ip, vectorized=True)
-
-    f_vec_dual = fspace.element(func_nd_dual, vectorized=True)
-    f_vec_dual_2 = fspace.element(func_nd_dual, vectorized=True)
-
-    assert f_novec == f_novec
-    assert f_novec != f_vec_oop
-    assert f_novec != f_vec_ip
-    assert f_novec != f_vec_dual
-
-    assert f_vec_oop == f_vec_oop
-    assert f_vec_oop == f_vec_oop_2
-    assert f_vec_oop != f_vec_ip
-    assert f_vec_oop != f_vec_dual
-
-    assert f_vec_ip == f_vec_ip
-    assert f_vec_ip == f_vec_ip_2
-    assert f_vec_ip != f_vec_dual
-
-    assert f_vec_dual == f_vec_dual
-    assert f_vec_dual == f_vec_dual_2
-
-    fspace_tens = FunctionSpace(intv, out_dtype=(float, (2, 3)))
-
-    f_tens_oop = fspace_tens.element(func_tens_oop)
-    f_tens_oop2 = fspace_tens.element(func_tens_oop)
-
-    f_tens_ip = fspace_tens.element(func_tens_ip)
-    f_tens_ip2 = fspace_tens.element(func_tens_ip)
-
-    f_tens_seq = fspace_tens.element(func_tens_oop_seq)
-    f_tens_seq2 = fspace_tens.element(func_tens_oop_seq)
-
-    assert f_tens_oop == f_tens_oop
-    assert f_tens_oop == f_tens_oop2
-    assert f_tens_oop != f_tens_ip
-    assert f_tens_oop != f_tens_seq
-
-    assert f_tens_ip == f_tens_ip
-    assert f_tens_ip == f_tens_ip2
-    assert f_tens_ip != f_tens_seq
-
-    # Sequences are wrapped, will compare to not equal
-    assert f_tens_seq == f_tens_seq
-    assert f_tens_seq != f_tens_seq2
-
-
-def test_fspace_elem_assign(out_shape):
-    """Check assignment of fspace elements."""
-    fspace = FunctionSpace(odl.IntervalProd(0, 1),
-                           out_dtype=(float, out_shape))
-
-    ndim = len(out_shape)
-    if ndim == 0:
-        f_oop = fspace.element(func_nd_oop)
-        f_ip = fspace.element(func_nd_ip)
-        f_dual = fspace.element(func_nd_dual)
-    elif ndim == 1:
-        f_oop = fspace.element(func_vec_nd_oop)
-        f_ip = fspace.element(func_vec_nd_ip)
-        f_dual = fspace.element(func_vec_nd_dual)
-    elif ndim == 2:
-        f_oop = fspace.element(func_tens_oop)
-        f_ip = fspace.element(func_tens_ip)
-        f_dual = fspace.element(func_tens_dual)
-    else:
-        assert False
-
-    f_out = fspace.element()
-    f_out.assign(f_oop)
-    assert f_out == f_oop
-
-    f_out = fspace.element()
-    f_out.assign(f_ip)
-    assert f_out == f_ip
-
-    f_out = fspace.element()
-    f_out.assign(f_dual)
-    assert f_out == f_dual
-
-
-def test_fspace_elem_copy(out_shape):
-    """Check copying of fspace elements."""
-    fspace = FunctionSpace(odl.IntervalProd(0, 1),
-                           out_dtype=(float, out_shape))
-
-    ndim = len(out_shape)
-    if ndim == 0:
-        f_oop = fspace.element(func_nd_oop)
-        f_ip = fspace.element(func_nd_ip)
-        f_dual = fspace.element(func_nd_dual)
-    elif ndim == 1:
-        f_oop = fspace.element(func_vec_nd_oop)
-        f_ip = fspace.element(func_vec_nd_ip)
-        f_dual = fspace.element(func_vec_nd_dual)
-    elif ndim == 2:
-        f_oop = fspace.element(func_tens_oop)
-        f_ip = fspace.element(func_tens_ip)
-        f_dual = fspace.element(func_tens_dual)
-    else:
-        assert False
-
-    f_out = f_oop.copy()
-    assert f_out == f_oop
-
-    f_out = f_ip.copy()
-    assert f_out == f_ip
-
-    f_out = f_dual.copy()
-    assert f_out == f_dual
-
-
-def test_fspace_elem_real_imag_conj(out_shape):
-    """Check taking real/imaginary parts of fspace elements."""
-    fspace = FunctionSpace(odl.IntervalProd(0, 1),
-                           out_dtype=(complex, out_shape))
-
-    ndim = len(out_shape)
-    if ndim == 0:
-        f_elem = fspace.element(func_complex_nd_oop)
-    elif ndim == 1:
-        f_elem = fspace.element(func_vec_complex_nd_oop)
-    elif ndim == 2:
-        f_elem = fspace.element(func_tens_complex_oop)
-    else:
-        assert False
-
-    points = _points(fspace.domain, 4)
-    mesh_shape = (5,)
-    mesh = _meshgrid(fspace.domain, mesh_shape)
-    point = 0.5
-    values_points_shape = out_shape + (4,)
-    values_mesh_shape = out_shape + mesh_shape
-
-    result_points = f_elem(points)
-    result_point = f_elem(point)
-    result_mesh = f_elem(mesh)
-
-    assert all_almost_equal(f_elem.real(points), result_points.real)
-    assert all_almost_equal(f_elem.real(point), result_point.real)
-    assert all_almost_equal(f_elem.real(mesh), result_mesh.real)
-    assert all_almost_equal(f_elem.imag(points), result_points.imag)
-    assert all_almost_equal(f_elem.imag(point), result_point.imag)
-    assert all_almost_equal(f_elem.imag(mesh), result_mesh.imag)
-    assert all_almost_equal(f_elem.conj()(points), result_points.conj())
-    assert all_almost_equal(f_elem.conj()(point), np.conj(result_point))
-    assert all_almost_equal(f_elem.conj()(mesh), result_mesh.conj())
-
-    out_points = np.empty(values_points_shape, dtype=float)
-    out_mesh = np.empty(values_mesh_shape, dtype=float)
-
-    f_elem.real(points, out=out_points)
-    f_elem.real(mesh, out=out_mesh)
-
-    assert all_almost_equal(out_points, result_points.real)
-    assert all_almost_equal(out_mesh, result_mesh.real)
-
-    f_elem.imag(points, out=out_points)
-    f_elem.imag(mesh, out=out_mesh)
-
-    assert all_almost_equal(out_points, result_points.imag)
-    assert all_almost_equal(out_mesh, result_mesh.imag)
-
-    out_points = np.empty(values_points_shape, dtype=complex)
-    out_mesh = np.empty(values_mesh_shape, dtype=complex)
-
-    f_elem.conj()(points, out=out_points)
-    f_elem.conj()(mesh, out=out_mesh)
-
-    assert all_almost_equal(out_points, result_points.conj())
-    assert all_almost_equal(out_mesh, result_mesh.conj())
-
-
-def test_fspace_zero(out_shape):
-    """Check zero element."""
-
-    fspace = FunctionSpace(odl.IntervalProd(0, 1),
-                           out_dtype=(float, out_shape))
-
-    points = _points(fspace.domain, 4)
-    mesh_shape = (5,)
-    mesh = _meshgrid(fspace.domain, mesh_shape)
-    point = 0.5
-    values_points_shape = out_shape + (4,)
-    values_point_shape = out_shape
-    values_mesh_shape = out_shape + mesh_shape
-
-    f_zero = fspace.zero()
-
-    assert all_equal(f_zero(points), np.zeros(values_points_shape))
-    if not out_shape:
-        assert f_zero(point) == 0.0
-    else:
-        assert all_equal(f_zero(point), np.zeros(values_point_shape))
-    assert all_equal(f_zero(mesh), np.zeros(values_mesh_shape))
-
-    out_points = np.empty(values_points_shape)
-    out_mesh = np.empty(values_mesh_shape)
-
-    f_zero(points, out=out_points)
-    f_zero(mesh, out=out_mesh)
-
-    assert all_equal(out_points, np.zeros(values_points_shape))
-    assert all_equal(out_mesh, np.zeros(values_mesh_shape))
-
-
-def test_fspace_one(out_shape):
-    """Check one element."""
-
-    fspace = FunctionSpace(odl.IntervalProd(0, 1),
-                           out_dtype=(float, out_shape))
-
-    points = _points(fspace.domain, 4)
-    mesh_shape = (5,)
-    mesh = _meshgrid(fspace.domain, mesh_shape)
-    point = 0.5
-    values_points_shape = out_shape + (4,)
-    values_point_shape = out_shape
-    values_mesh_shape = out_shape + mesh_shape
-
-    f_one = fspace.one()
-
-    assert all_equal(f_one(points), np.ones(values_points_shape))
-    if not out_shape:
-        assert f_one(point) == 1.0
-    else:
-        assert all_equal(f_one(point), np.ones(values_point_shape))
-    assert all_equal(f_one(mesh), np.ones(values_mesh_shape))
-
-    out_points = np.empty(values_points_shape)
-    out_mesh = np.empty(values_mesh_shape)
-
-    f_one(points, out=out_points)
-    f_one(mesh, out=out_mesh)
-
-    assert all_equal(out_points, np.ones(values_points_shape))
-    assert all_equal(out_mesh, np.ones(values_mesh_shape))
-
-
-def test_fspace_lincomb_scalar(a, b):
-    """Check linear combination in function spaces.
-
-    Note: Special cases and more alignment options are tested later in the
-    special methods like ``__add__``.
-    """
-    intv = odl.IntervalProd([0, 0], [1, 1])
-    fspace = FunctionSpace(intv)
-    points = _points(fspace.domain, 4)
-    true_result = a * func_nd_oop(points) + b * func_nd_bcast_ref(points)
-
-    # Non-vectorized evaluation, checking with `out` array and without.
-    f_elem1_novec = fspace.element(func_nd_oop, vectorized=False)
-    f_elem2_novec = fspace.element(func_nd_bcast_oop, vectorized=False)
-    out_novec = fspace.element(vectorized=False)
-    fspace.lincomb(a, f_elem1_novec, b, f_elem2_novec, out_novec)
-
-    assert all_equal(out_novec(points), true_result)
-    out_arr = np.empty(4)
-    out_novec(points, out=out_arr)
-    assert all_equal(out_arr, true_result)
-
-    # Vectorized evaluation with definition from out-of-place (oop),
-    # in-place (ip) and dual-use (dual) versions of Python functions.
-    # Checking evaluation with `out` array and without.
-
-    # out-of-place
-    f_elem1_oop = fspace.element(func_nd_oop)
-    f_elem2_oop = fspace.element(func_nd_bcast_oop)
-    out_oop = fspace.element()
-    fspace.lincomb(a, f_elem1_oop, b, f_elem2_oop, out_oop)
-
-    assert all_equal(out_oop(points), true_result)
-    out_arr = np.empty(4)
-    out_oop(points, out=out_arr)
-    assert all_equal(out_arr, true_result)
-
-    # in-place
-    f_elem1_ip = fspace.element(func_nd_ip)
-    f_elem2_ip = fspace.element(func_nd_bcast_ip)
-    out_ip = fspace.element()
-    fspace.lincomb(a, f_elem1_ip, b, f_elem2_ip, out_ip)
-
-    assert all_equal(out_ip(points), true_result)
-    out_arr = np.empty(4)
-    out_ip(points, out=out_arr)
-    assert all_equal(out_arr, true_result)
-
-    # dual
-    f_elem1_dual = fspace.element(func_nd_dual)
-    f_elem2_dual = fspace.element(func_nd_bcast_dual)
-    out_dual = fspace.element()
-    fspace.lincomb(a, f_elem1_dual, b, f_elem2_dual, out_dual)
-
-    assert all_equal(out_dual(points), true_result)
-    out_arr = np.empty(4)
-    out_dual(points, out=out_arr)
-    assert all_equal(out_arr, true_result)
-
-    # Check mixing vectorized and non-vectorized functions
-    out = fspace.element()
-    fspace.lincomb(a, f_elem1_oop, b, f_elem2_novec, out)
-    assert all_equal(out(points), true_result)
-    out_arr = np.empty(4)
-    out(points, out=out_arr)
-    assert all_equal(out_arr, true_result)
-
-    # Alignment options
-    # out = a * out + b * f2, out = f1.copy() -> same as before
-    out = f_elem1_oop.copy()
-    fspace.lincomb(a, out, b, f_elem2_oop, out)
-    true_result_aligned = true_result
-    assert all_equal(out(points), true_result_aligned)
-
-    # out = a * f1 + b * out, out = f2.copy() -> same as before
-    out = f_elem2_oop.copy()
-    fspace.lincomb(a, f_elem1_oop, b, out, out)
-    true_result_aligned = true_result
-    assert all_equal(out(points), true_result_aligned)
-
-    # out = a * out + b * out
-    out = f_elem1_oop.copy()
-    fspace.lincomb(a, out, b, out, out)
-    true_result_aligned = (a + b) * f_elem1_oop(points)
-    assert all_equal(out(points), true_result_aligned)
-
-    # out = a * f1 + b * f1
-    out = fspace.element()
-    fspace.lincomb(a, f_elem1_oop, b, f_elem1_oop, out)
-    true_result_aligned = (a + b) * f_elem1_oop(points)
-    assert all_equal(out(points), true_result_aligned)
-
-
-def test_fspace_lincomb_vec_tens(a, b, out_shape):
-    """Check linear combination in function spaces."""
-    if out_shape == ():
-        return
-
-    intv = odl.IntervalProd([0, 0], [1, 1])
-    fspace = FunctionSpace(intv, out_dtype=(float, out_shape))
-    points = _points(fspace.domain, 4)
-
-    ndim = len(out_shape)
-    if ndim == 1:
-        f_elem1 = fspace.element(func_vec_nd_oop)
-        f_elem2 = fspace.element(func_vec_nd_other)
-        true_result = (a * func_vec_nd_ref(points) +
-                       b * func_vec_nd_other(points))
-    elif ndim == 2:
-        f_elem1 = fspace.element(func_tens_oop)
-        f_elem2 = fspace.element(func_tens_other)
-        true_result = a * func_tens_ref(points) + b * func_tens_other(points)
-    else:
-        assert False
-
-    out_func = fspace.element()
-    fspace.lincomb(a, f_elem1, b, f_elem2, out_func)
-    assert all_equal(out_func(points), true_result)
-    out_arr = np.empty(out_shape + (4,))
-    out_func(points, out=out_arr)
-    assert all_equal(out_arr, true_result)
-
-
-# NOTE: multiply and divide are tested via special methods
-
-
-def test_fspace_elem_power(power, out_shape):
-    """Check taking powers of fspace elements."""
-    # Make sure test functions don't take negative values
-    intv = odl.IntervalProd([1, 0], [2, 1])
-    fspace = FunctionSpace(intv, out_dtype=(float, out_shape))
-    points = _points(fspace.domain, 4)
-
-    ndim = len(out_shape)
-    with np.errstate(all='ignore'):
-        if ndim == 0:
-            f_elem = fspace.element(func_nd_oop)
-            true_result = func_nd_ref(points) ** power
-        elif ndim == 1:
-            f_elem = fspace.element(func_vec_nd_oop)
-            true_result = func_vec_nd_ref(points) ** power
-        elif ndim == 2:
-            f_elem = fspace.element(func_tens_oop)
-            true_result = func_tens_ref(points) ** power
-        else:
-            assert False
-
-        # Out-of-place power
-        f_elem_pow = f_elem ** power
-        assert all_almost_equal(f_elem_pow(points), true_result)
-        out_arr = np.empty(out_shape + (4,))
-        f_elem_pow(points, out_arr)
-        assert all_almost_equal(out_arr, true_result)
-
-        # In-place power
-        f_elem_pow = f_elem.copy()
-        f_elem_pow **= power
-        assert all_almost_equal(f_elem_pow(points), true_result)
-        out_arr = np.empty(out_shape + (4,))
-        f_elem_pow(points, out_arr)
-        assert all_almost_equal(out_arr, true_result)
-
-
-def test_fspace_elem_arithmetic(odl_arithmetic_op, out_shape):
-    """Test arithmetic of fspace elements."""
-    op = odl_arithmetic_op
-
-    intv = odl.IntervalProd([1, 0], [2, 1])
-    fspace = FunctionSpace(intv, out_dtype=(float, out_shape))
-    points = _points(fspace.domain, 4)
-
-    ndim = len(out_shape)
-    if ndim == 0:
-        f_elem1 = fspace.element(func_nd_oop)
-        f_elem2 = fspace.element(func_nd_other)
-    elif ndim == 1:
-        f_elem1 = fspace.element(func_vec_nd_oop)
-        f_elem2 = fspace.element(func_vec_nd_other)
-    elif ndim == 2:
-        f_elem1 = fspace.element(func_tens_oop)
-        f_elem2 = fspace.element(func_tens_other)
-    else:
-        assert False
-
-    result1 = f_elem1(points)
-    result1_cpy = result1.copy()
-    result2 = f_elem2(points)
-    true_result_func = op(result1, result2)
-    true_result_scal = op(result1_cpy, -2.0)
-
-    f_elem1_cpy = f_elem1.copy()
-    func_arith_func = op(f_elem1, f_elem2)
-    func_arith_scal = op(f_elem1_cpy, -2.0)
-    assert all_almost_equal(func_arith_func(points), true_result_func)
-    assert all_almost_equal(func_arith_scal(points), true_result_scal)
-    out_arr_func = np.empty(out_shape + (4,))
-    out_arr_scal = np.empty(out_shape + (4,))
-    func_arith_func(points, out=out_arr_func)
-    func_arith_scal(points, out=out_arr_scal)
-    assert all_almost_equal(out_arr_func, true_result_func)
-    assert all_almost_equal(out_arr_scal, true_result_scal)
-
 
 if __name__ == '__main__':
     odl.util.test_file(__file__)
