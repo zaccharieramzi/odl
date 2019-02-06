@@ -20,15 +20,36 @@ from itertools import product
 import numpy as np
 
 __all__ = (
-    'array_str', 'dtype_str', 'dtype_repr', 'npy_printoptions',
-    'signature_string', 'signature_string_parts', 'repr_string',
-    'indent', 'dedent', 'attribute_repr_string', 'method_repr_string',
-    'is_numeric_dtype', 'is_int_dtype', 'is_floating_dtype', 'is_real_dtype',
-    'is_real_floating_dtype', 'is_complex_floating_dtype',
-    'real_dtype', 'complex_dtype', 'is_string', 'nd_iterator', 'conj_exponent',
-    'writable_array', 'run_from_ipython', 'npy_random_seed',
-    'cache_arguments', 'unique',
-    'REPR_PRECISION')
+    'array_str',
+    'dtype_str',
+    'dtype_repr',
+    'npy_printoptions',
+    'npy_error_handling',
+    'signature_string',
+    'signature_string_parts',
+    'repr_string',
+    'indent',
+    'dedent',
+    'attribute_repr_string',
+    'method_repr_string',
+    'is_numeric_dtype',
+    'is_int_dtype',
+    'is_floating_dtype',
+    'is_real_dtype',
+    'is_real_floating_dtype',
+    'is_complex_floating_dtype',
+    'real_dtype',
+    'complex_dtype',
+    'is_string',
+    'nd_iterator',
+    'conj_exponent',
+    'writable_array',
+    'run_from_ipython',
+    'npy_random_seed',
+    'cache_arguments',
+    'unique',
+    'REPR_PRECISION',
+)
 
 
 REPR_PRECISION = 4  # For printing scalars and array entries
@@ -200,11 +221,12 @@ def npy_error_handling(**options):
 
     Examples
     --------
-    >>> np.array(1.0) / np.array(0.0)  # no error
+    >>> with npy_error_handling(divide="ignore"):
+    ...     print(np.array(1.0) / np.array(0.0))  # no error or warning
     inf
     >>> with npy_error_handling(divide="raise"):
     ...     try:
-    ...         np.array(1.0) / np.array(0.0)
+    ...         print(np.array(1.0) / np.array(0.0))
     ...     except FloatingPointError:
     ...         print("Divide by zero!")
     Divide by zero!
