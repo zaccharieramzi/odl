@@ -480,8 +480,9 @@ class DiscreteLp(TensorSpace):
             return False
         else:
             return (
-                super(DiscreteLp, self).__eq__(other) and
-                other.tspace == self.tspace
+                super(DiscreteLp, self).__eq__(other)
+                and other.tspace == self.tspace
+                and other.partition == self.partition
             )
 
     def __hash__(self):
