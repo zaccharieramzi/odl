@@ -39,12 +39,19 @@ sign = simple_fixture('sign', ['-', '+'])
 # --- Helper functions --- #
 
 
+
 def _params_from_dtype(dtype):
     if is_real_dtype(dtype):
         halfcomplex = True
     else:
         halfcomplex = False
     return halfcomplex, complex_dtype(dtype)
+
+
+def _dft_space(shape, dtype='float64'):
+    return odl.uniform_discr(
+        [0, 0], shape, shape, dtype=dtype, nodes_on_bdry=True
+    )
 
 
 def sinc(x):
@@ -58,12 +65,12 @@ def sinc(x):
 def test_dft_init(impl):
     # Just check if the code runs at all
     shape = (4, 5)
-    dom = odl.discr_sequence_space(shape)
+    dom = _dft_space(shape)
     dom_nonseq = odl.uniform_discr([0, 0], [1, 1], shape)
-    dom_f32 = odl.discr_sequence_space(shape, dtype='float32')
-    ran = odl.discr_sequence_space(shape, dtype='complex128')
-    ran_c64 = odl.discr_sequence_space(shape, dtype='complex64')
-    ran_hc = odl.discr_sequence_space((3, 5), dtype='complex128')
+    dom_f32 = dom.astype('float32')
+    ran = _dft_space(shape, dtype='complex128')
+    ran_c64 = ran.astype('complex64')
+    ran_hc = _dft_space((3, 5), dtype='complex128')
 
     # Implicit range
     DiscreteFourierTransform(dom, impl=impl)
@@ -87,8 +94,8 @@ def test_dft_init(impl):
 def test_dft_init_raise():
     # Test different error scenarios
     shape = (4, 5)
-    dom = odl.discr_sequence_space(shape)
-    dom_f32 = odl.discr_sequence_space(shape, dtype='float32')
+    dom = _dft_space(shape)
+    dom_f32 = _dft_space(shape, dtype='float32')
 
     # Bad types
     with pytest.raises(TypeError):
@@ -108,36 +115,36 @@ def test_dft_init_raise():
         DiscreteFourierTransform(dom, axes=(1, -3))
 
     # Badly shaped range
-    bad_ran = odl.discr_sequence_space((3, 5), dtype='complex128')
+    bad_ran = _dft_space((3, 5), dtype='complex128')
     with pytest.raises(ValueError):
         DiscreteFourierTransform(dom, bad_ran)
 
-    bad_ran = odl.discr_sequence_space((10, 10), dtype='complex128')
+    bad_ran = _dft_space((10, 10), dtype='complex128')
     with pytest.raises(ValueError):
         DiscreteFourierTransform(dom, bad_ran)
 
-    bad_ran = odl.discr_sequence_space((4, 5), dtype='complex128')
+    bad_ran = _dft_space((4, 5), dtype='complex128')
     with pytest.raises(ValueError):
         DiscreteFourierTransform(dom, bad_ran, halfcomplex=True)
 
-    bad_ran = odl.discr_sequence_space((4, 3), dtype='complex128')
+    bad_ran = _dft_space((4, 3), dtype='complex128')
     with pytest.raises(ValueError):
         DiscreteFourierTransform(dom, bad_ran, halfcomplex=True, axes=(0,))
 
     # Bad data types
-    bad_ran = odl.discr_sequence_space(shape, dtype='complex64')
+    bad_ran = _dft_space(shape, dtype='complex64')
     with pytest.raises(ValueError):
         DiscreteFourierTransform(dom, bad_ran)
 
-    bad_ran = odl.discr_sequence_space(shape, dtype='float64')
+    bad_ran = _dft_space(shape, dtype='float64')
     with pytest.raises(ValueError):
         DiscreteFourierTransform(dom, bad_ran)
 
-    bad_ran = odl.discr_sequence_space((4, 3), dtype='float64')
+    bad_ran = _dft_space((4, 3), dtype='float64')
     with pytest.raises(ValueError):
         DiscreteFourierTransform(dom, bad_ran, halfcomplex=True)
 
-    bad_ran = odl.discr_sequence_space((4, 3), dtype='complex128')
+    bad_ran = _dft_space((4, 3), dtype='complex128')
     with pytest.raises(ValueError):
         DiscreteFourierTransform(dom_f32, bad_ran, halfcomplex=True)
 
@@ -149,25 +156,25 @@ def test_dft_init_raise():
 def test_dft_range():
     # 1d
     shape = 10
-    dom = odl.discr_sequence_space(shape, dtype='complex128')
+    dom = _dft_space(shape, dtype='complex128')
     fft = DiscreteFourierTransform(dom)
-    true_ran = odl.discr_sequence_space(shape, dtype='complex128')
+    true_ran = _dft_space(shape, dtype='complex128')
     assert fft.range == true_ran
 
     # 3d
     shape = (3, 4, 5)
-    ran = odl.discr_sequence_space(shape, dtype='complex64')
+    ran = _dft_space(shape, dtype='complex64')
     fft = DiscreteFourierTransform(ran)
-    true_ran = odl.discr_sequence_space(shape, dtype='complex64')
+    true_ran = _dft_space(shape, dtype='complex64')
     assert fft.range == true_ran
 
     # 3d, with axes and halfcomplex
     shape = (3, 4, 5)
     axes = (-1, -2)
     ran_shape = (3, 3, 5)
-    dom = odl.discr_sequence_space(shape, dtype='float32')
+    dom = _dft_space(shape, dtype='float32')
     fft = DiscreteFourierTransform(dom, axes=axes, halfcomplex=True)
-    true_ran = odl.discr_sequence_space(ran_shape, dtype='complex64')
+    true_ran = _dft_space(ran_shape, dtype='complex64')
     assert fft.range == true_ran
 
 
@@ -178,10 +185,10 @@ def test_idft_init(impl):
     # Just check if the code runs at all; this uses the init function of
     # DiscreteFourierTransform, so we don't need exhaustive tests here
     shape = (4, 5)
-    ran = odl.discr_sequence_space(shape, dtype='complex128')
-    ran_hc = odl.discr_sequence_space(shape, dtype='float64')
-    dom = odl.discr_sequence_space(shape, dtype='complex128')
-    dom_hc = odl.discr_sequence_space((3, 5), dtype='complex128')
+    ran = _dft_space(shape, dtype='complex128')
+    ran_hc = _dft_space(shape, dtype='float64')
+    dom = _dft_space(shape, dtype='complex128')
+    dom_hc = _dft_space((3, 5), dtype='complex128')
 
     # Implicit range
     DiscreteFourierTransformInverse(dom, impl=impl)
@@ -196,7 +203,7 @@ def test_dft_call(impl):
 
     # 2d, complex, all ones and random back & forth
     shape = (4, 5)
-    dft_dom = odl.discr_sequence_space(shape, dtype='complex64')
+    dft_dom = _dft_space(shape, dtype='complex64')
     dft = DiscreteFourierTransform(domain=dft_dom, impl=impl)
     idft = DiscreteFourierTransformInverse(range=dft_dom, impl=impl)
 
@@ -230,7 +237,7 @@ def test_dft_call(impl):
     # 2d, halfcomplex, first axis
     shape = (4, 5)
     axes = 0
-    dft_dom = odl.discr_sequence_space(shape, dtype='float32')
+    dft_dom = _dft_space(shape, dtype='float32')
     dft = DiscreteFourierTransform(domain=dft_dom, impl=impl, halfcomplex=True,
                                    axes=axes)
     idft = DiscreteFourierTransformInverse(range=dft_dom, impl=impl,
@@ -263,7 +270,7 @@ def test_dft_sign(impl):
 
     # 2d, complex, all ones and random back & forth
     shape = (4, 5)
-    dft_dom = odl.discr_sequence_space(shape, dtype='complex64')
+    dft_dom = _dft_space(shape, dtype='complex64')
     dft_minus = DiscreteFourierTransform(domain=dft_dom, impl=impl, sign='-')
     dft_plus = DiscreteFourierTransform(domain=dft_dom, impl=impl, sign='+')
 
@@ -284,7 +291,7 @@ def test_dft_sign(impl):
     # 2d, halfcomplex, first axis
     shape = (4, 5)
     axes = (0,)
-    dft_dom = odl.discr_sequence_space(shape, dtype='float32')
+    dft_dom = _dft_space(shape, dtype='float32')
     arr = dft_dom.element([[0, 0, 0, 0, 0],
                            [0, 0, 1, 1, 0],
                            [0, 0, 1, 1, 0],
@@ -308,7 +315,7 @@ def test_dft_init_plan(impl):
     # 2d, halfcomplex, first axis
     shape = (4, 5)
     axes = 0
-    dft_dom = odl.discr_sequence_space(shape, dtype='float32')
+    dft_dom = _dft_space(shape, dtype='float32')
 
     dft = DiscreteFourierTransform(dft_dom, impl=impl, axes=axes,
                                    halfcomplex=True)
