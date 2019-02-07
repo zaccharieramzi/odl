@@ -14,7 +14,7 @@ from numbers import Integral
 
 import numpy as np
 
-from odl.discr.discr_utils import make_vec_func_for_sampling, point_collocation
+from odl.discr.discr_utils import make_func_for_sampling, point_collocation
 from odl.discr.partition import (
     RectPartition, uniform_partition, uniform_partition_fromintv)
 from odl.set import IntervalProd, RealNumbers
@@ -296,10 +296,6 @@ class DiscreteLp(TensorSpace):
             Storage order of the returned element. For ``'C'`` and ``'F'``,
             contiguous memory in the respective ordering is enforced.
             The default ``None`` enforces no contiguousness.
-        vectorized : bool, optional
-            If ``True``, assume that a provided callable ``inp`` supports
-            vectorized evaluation. Otherwise, wrap it in a vectorizer.
-            Default: ``True``.
         kwargs :
             Additional arguments passed on to `sampling` when called
             on ``inp``, in the form ``sampling(inp, **kwargs)``.
@@ -351,17 +347,18 @@ class DiscreteLp(TensorSpace):
         elif inp in self.tspace and order is None:
             return self.element_type(self, inp)
         elif callable(inp):
-            vectorized = kwargs.pop('vectorized', True)
-            func = make_vec_func_for_sampling(
-                inp, self.domain, out_dtype=self.dtype, vectorized=vectorized
+            func = make_func_for_sampling(
+                inp, self.domain, out_dtype=self.dtype,
             )
             sampled = point_collocation(func, self.meshgrid, **kwargs)
             return self.element_type(
-                self, self.tspace.element(sampled, order=order))
+                self, self.tspace.element(sampled, order=order)
+            )
         else:
             # Sequence-type input
             return self.element_type(
-                self, self.tspace.element(inp, order=order))
+                self, self.tspace.element(inp, order=order)
+            )
 
     def zero(self):
         """Return the element of all zeros."""

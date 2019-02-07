@@ -278,10 +278,6 @@ def test_element_from_function_1d():
     true_elem = [1.0 for x in points]
     assert all_equal(elem_lam, true_elem)
 
-    # Non vectorized
-    elem_lam = space.element(lambda x: x[0], vectorized=False)
-    assert all_equal(elem_lam, points)
-
 
 def test_element_from_function_2d():
     """Test creation of DiscreteLp elements from functions in 2 dimensions."""
@@ -332,12 +328,6 @@ def test_element_from_function_2d():
     # Broadcast from constant function
     elem_lam = space.element(lambda x: 1.0)
     true_elem = np.reshape([1.0 for x in points],
-                           space.shape)
-    assert all_equal(elem_lam, true_elem)
-
-    # Non vectorized
-    elem_lam = space.element(lambda x: x[0] + x[1], vectorized=False)
-    true_elem = np.reshape([x[0] + x[1] for x in points],
                            space.shape)
     assert all_equal(elem_lam, true_elem)
 

@@ -17,7 +17,6 @@ from __future__ import absolute_import, division, print_function
 
 import inspect
 import sys
-import warnings
 from builtins import object
 from functools import partial
 from itertools import product
@@ -25,16 +24,16 @@ from itertools import product
 import numpy as np
 
 from odl.util import (
-    dtype_repr, is_complex_floating_dtype, is_real_dtype, is_string,
-    is_valid_input_array, is_valid_input_meshgrid, out_shape_from_array,
-    out_shape_from_meshgrid, vectorize, writable_array)
+    dtype_repr, is_real_dtype, is_string, is_valid_input_array,
+    is_valid_input_meshgrid, out_shape_from_array, out_shape_from_meshgrid,
+    writable_array)
 
 __all__ = (
     'point_collocation',
     'nearest_interpolator',
     'linear_interpolator',
     'per_axis_interpolator',
-    'make_vec_func_for_sampling',
+    'make_func_for_sampling',
 )
 
 _SUPPORTED_INTERP_SCHEMES = ['nearest', 'linear']
@@ -53,7 +52,7 @@ def point_collocation(func, points, out=None, **kwargs):
         Function to be sampled. It is expected to work with single points,
         meshgrids and point arrays, and to support an optional ``out``
         argument.
-        Usually, ``func`` is the return value of `make_vec_func_for_sampling`.
+        Usually, ``func`` is the return value of `make_func_for_sampling`.
     points : point, meshgrid or array of points
         The point(s) where to sample.
     out : numpy.ndarray, optional
@@ -73,7 +72,7 @@ def point_collocation(func, points, out=None, **kwargs):
 
     >>> from odl.discr.grid import sparse_meshgrid
     >>> domain = odl.IntervalProd(0, 5)
-    >>> func = make_vec_func_for_sampling(lambda x: x ** 2, domain)
+    >>> func = make_func_for_sampling(lambda x: x ** 2, domain)
     >>> mesh = sparse_meshgrid([1, 2, 3])
     >>> point_collocation(func, mesh)
     array([ 1.,  4.,  9.])
@@ -93,7 +92,7 @@ def point_collocation(func, points, out=None, **kwargs):
     >>> xs = [1, 2]
     >>> ys = [3, 4, 5]
     >>> mesh = sparse_meshgrid(xs, ys)
-    >>> func = make_vec_func_for_sampling(lambda x: x[0] - x[1], domain)
+    >>> func = make_func_for_sampling(lambda x: x[0] - x[1], domain)
     >>> point_collocation(func, mesh)
     array([[-2., -3., -4.],
            [-1., -2., -3.]])
@@ -103,7 +102,7 @@ def point_collocation(func, points, out=None, **kwargs):
 
     >>> def f(x, c=0):
     ...     return x[0] + c
-    >>> func = make_vec_func_for_sampling(f, domain)
+    >>> func = make_func_for_sampling(f, domain)
     >>> point_collocation(func, mesh)  # uses default c=0
     array([[ 1.,  1.,  1.],
            [ 2.,  2.,  2.]])
@@ -122,7 +121,7 @@ def point_collocation(func, points, out=None, **kwargs):
     >>> def vec_valued(x):
     ...     return (x[0] - 1, 0, x[0] + x[1])  # broadcasting
     >>> # We must tell the wrapper that we want a 3-component function
-    >>> func1 = make_vec_func_for_sampling(
+    >>> func1 = make_func_for_sampling(
     ...     vec_valued, domain, out_dtype=(float, (3,)))
     >>> point_collocation(func1, mesh)
     array([[[ 0.,  0.],
@@ -138,7 +137,7 @@ def point_collocation(func, points, out=None, **kwargs):
     ...     0,                   # constants are allowed
     ...     lambda x: x[0] + x[1]
     ... ]
-    >>> func2 = make_vec_func_for_sampling(
+    >>> func2 = make_func_for_sampling(
     ...     array_of_funcs, domain, out_dtype=(float, (3,)))
     >>> point_collocation(func2, mesh)
     array([[[ 0.,  0.],
@@ -158,7 +157,7 @@ def point_collocation(func, points, out=None, **kwargs):
 
     See Also
     --------
-    make_vec_func_for_sampling : wrap a function
+    make_func_for_sampling : wrap a function
     odl.discr.grid.RectGrid.meshgrid
     numpy.meshgrid
 
@@ -316,7 +315,7 @@ def nearest_interpolator(f, coord_vecs, variant='left'):
 
 
 # TODO(kohr-h): doc
-def linear_interpolator(x, coord_vecs):
+def linear_interpolator(f, coord_vecs):
     """
 
     Parameters
@@ -326,17 +325,19 @@ def linear_interpolator(x, coord_vecs):
     coord_vecs :
 
     """
+    f = np.asarray(f)
+
     # TODO(kohr-h): pass reasonable options on to the interpolator
     def linear_interp(arg, out=None):
         """Interpolating function with vectorization."""
-        if is_valid_input_meshgrid(arg, x.ndim):
+        if is_valid_input_meshgrid(arg, f.ndim):
             input_type = 'meshgrid'
         else:
             input_type = 'array'
 
         interpolator = _LinearInterpolator(
             coord_vecs,
-            x,
+            f,
             input_type=input_type
         )
 
@@ -850,7 +851,7 @@ def _func_out_type(func):
     """Check if ``func`` has (optional) output argument.
 
     This function is intended to work with all types of callables
-    that are used as input to `make_vec_func_for_sampling`.
+    that are used as input to `make_func_for_sampling`.
     """
     # Numpy Ufuncs and similar objects (e.g. Numba DUfuncs)
     if hasattr(func, 'nin') and hasattr(func, 'nout'):
@@ -875,9 +876,8 @@ def _func_out_type(func):
     return has_out, out_optional
 
 
-def make_vec_func_for_sampling(func_or_arr, domain, out_dtype='float64',
-                               vectorized=True):
-    """Return a vectorized function that can be used for sampling.
+def make_func_for_sampling(func_or_arr, domain, out_dtype='float64'):
+    """Return a function that can be used for sampling.
 
     For examples on this function's usage, see `point_collocation`.
 
@@ -902,16 +902,10 @@ def make_vec_func_for_sampling(func_or_arr, domain, out_dtype='float64',
         - If ``func_or_arr`` is an array-like, ``out_dtype`` should be a
           shaped dtype whose shape matches that of ``func_or_arr``.
 
-    vectorized : bool, optional
-        Whether the provided function or functions support vectorized call.
-        If ``False``, `numpy.vectorize` is used to add that support. Note
-        that this results in very slow evaluation.
-
     Returns
     -------
     func : function
-        Wrapper function that supports vectorized call and an optional
-        ``out`` argument.
+        Wrapper function that has an optional ``out`` argument.
     """
     if out_dtype is None:
         # Don't let `np.dtype` convert `None` to `float64`
@@ -930,8 +924,7 @@ def make_vec_func_for_sampling(func_or_arr, domain, out_dtype='float64',
         elif is_valid_input_meshgrid(x, domain.ndim):
             scalar_out_shape = out_shape_from_meshgrid(x)
         else:
-            raise TypeError('cannot use in-place method to implement '
-                            'out-of-place non-vectorized evaluation')
+            raise TypeError('invalid input `x`')
 
         out_shape = val_shape + scalar_out_shape
         out = np.empty(out_shape, dtype=scalar_out_dtype)
@@ -949,7 +942,7 @@ def make_vec_func_for_sampling(func_or_arr, domain, out_dtype='float64',
             elif is_valid_input_meshgrid(x, domain.ndim):
                 scalar_out_shape = out_shape_from_meshgrid(x)
             else:
-                raise RuntimeError('bad input')
+                raise TypeError('invalid input `x`')
 
             bcast_results = [np.broadcast_to(res, scalar_out_shape)
                              for res in flat_results]
@@ -979,28 +972,7 @@ def make_vec_func_for_sampling(func_or_arr, domain, out_dtype='float64',
         # Got a (single) function, possibly need to vectorize
         func = func_or_arr
 
-        if not vectorized:
-            if hasattr(func, 'nin') and hasattr(func, 'nout'):
-                warnings.warn(
-                    '`func` {!r} is a ufunc-like object, use vectorized=True'
-                    ''.format(func),
-                    UserWarning
-                )
-            # Don't put this before the ufunc case. Ufuncs can't be inspected.
-            has_out, _ = _func_out_type(func)
-            if has_out:
-                raise TypeError(
-                    'non-vectorized `func` with `out` parameter not allowed'
-                )
-            if out_dtype is not None:
-                otypes = [out_dtype.base]
-            else:
-                otypes = []
-
-            func = vectorize(otypes=otypes)(func)
-
         # Get default implementations if necessary
-
         has_out, out_optional = _func_out_type(func)
         if not has_out:
             # Out-of-place-only
@@ -1027,17 +999,6 @@ def make_vec_func_for_sampling(func_or_arr, domain, out_dtype='float64',
                 '`out_dtype.shape` {}'.format(val_shape))
 
         arr = np.array(arr, dtype=object, ndmin=1).ravel().tolist()
-        if not vectorized:
-            if is_real_dtype(out_dtype):
-                otypes = ['float64']
-            elif is_complex_floating_dtype(out_dtype):
-                otypes = ['complex128']
-            else:
-                otypes = []
-
-            # Vectorize, preserving scalars
-            arr = [f if np.isscalar(f) else vectorize(otypes=otypes)(f)
-                   for f in arr]
 
         def array_wrapper_func(x, out=None, **kwargs):
             """Function wrapping an array of callables and constants.
@@ -1145,7 +1106,9 @@ def make_vec_func_for_sampling(func_or_arr, domain, out_dtype='float64',
 def _make_dual_use_func(func_ip, func_oop, domain, out_dtype):
     """Return a unifying wrapper function with optional ``out`` argument."""
 
-    ndim = domain.ndim
+    # Default to `ndim=1` for unusual domains that do not define a dimension
+    # (like `Strings(3)`)
+    ndim = getattr(domain, 'ndim', 1)
     if out_dtype is None:
         # Don't let `np.dtype` convert `None` to `float64`
         raise TypeError('`out_dtype` cannot be `None`')
@@ -1184,8 +1147,7 @@ def _make_dual_use_func(func_ip, func_oop, domain, out_dtype):
 
         out : `numpy.ndarray`, optional
             Output argument holding the result of the function evaluation.
-            Can only be used for vectorized functions. Its shape must be equal
-            to ``out_dtype.shape + np.broadcast(*x).shape``.
+            Its shape must be ``out_dtype.shape + np.broadcast(*x).shape``.
         bounds_check : bool, optional
             If ``True``, check if all input points lie in ``domain``. This
             requires ``domain`` to implement `Set.contains_all`.
@@ -1372,7 +1334,7 @@ def _make_dual_use_func(func_ip, func_oop, domain, out_dtype):
         # to __float__), so we have to fish out the scalar ourselves.
         if scalar_out:
             scalar = out.ravel()[0].item()
-            if is_real_dtype:
+            if is_real_dtype(out_dtype):
                 return float(scalar)
             else:
                 return complex(scalar)
