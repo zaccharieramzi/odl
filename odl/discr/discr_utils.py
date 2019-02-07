@@ -200,7 +200,7 @@ def _all_interp_equal(interp_byaxis):
 
 
 def nearest_interpolator(f, coord_vecs, variant='left'):
-    """Nearest neighbor interpolation.
+    """Return the nearest neighbor interpolator for discrete values.
 
     Given points ``x[1] < x[2] < ... < x[N]``, and function values
     ``f[1], ..., f[N]``, nearest neighbor interpolation at ``x`` is defined
@@ -223,6 +223,12 @@ def nearest_interpolator(f, coord_vecs, variant='left'):
         they are obtained as ``grid.coord_vectors`` from a `RectGrid`.
     variant : {'left', 'right'}, optional
         Which neighbor to prefer at the midpoint between two nodes.
+
+    Returns
+    -------
+    interpolator : function
+        Python function that will interpolate the given values when called
+        with a point or multiple points (vectorized).
 
     Examples
     --------
@@ -314,16 +320,61 @@ def nearest_interpolator(f, coord_vecs, variant='left'):
     return nearest_interp
 
 
-# TODO(kohr-h): doc
 def linear_interpolator(f, coord_vecs):
-    """
+    """Return the linear interpolator for discrete values.
 
     Parameters
     ----------
-    x :
+    f : numpy.ndarray
+        Function values that should be interpolated.
+    coord_vecs : sequence of numpy.ndarray
+        Coordinate vectors of the rectangular grid on which interpolation
+        should be based. They must be sorted in ascending order. Usually
+        they are obtained as ``grid.coord_vectors`` from a `RectGrid`.
 
-    coord_vecs :
+    Returns
+    -------
+    interpolator : function
+        Python function that will interpolate the given values when called
+        with a point or multiple points (vectorized).
 
+    Examples
+    --------
+    We interpolate a 1d function. If called with a single point, the
+    interpolator returns a single value, and with multiple points at once,
+    an array of values is returned:
+
+    >>> part = odl.uniform_partition(0, 2, 5)
+    >>> part.coord_vectors  # grid points
+    (array([ 0.2,  0.6,  1. ,  1.4,  1.8]),)
+    >>> f = [1.0, 2.0, 3.0, 4.0, 5.0]
+    >>> interpolator = linear_interpolator(f, part.coord_vectors)
+    >>> interpolator(0.3)  # 0.75 * 1 + 0.25 * 2 = 1.25
+    1.25
+    >>> interpolator([0.6, 1.3, 1.9])
+    array([ 2.  ,  3.75,  3.75])
+
+    In 2 dimensions, we can either use a list of points or a meshgrid:
+
+    >>> part = odl.uniform_partition([0, 0], [1, 5], shape=(2, 4))
+    >>> part.coord_vectors  # grid points
+    (array([ 0.25,  0.75]), array([ 0.625,  1.875,  3.125,  4.375]))
+    >>> f = np.array([[1, 2, 3, 4],
+    ...               [5, 6, 7, 8]],
+    ...              dtype=float)
+    >>> interpolator = linear_interpolator(f, part.coord_vectors)
+    >>> interpolator([1, 1])  # single point
+    2.65
+    >>> interpolator([[0.5, 2.0],
+    ...               [0.0, 4.5],
+    ...               [0.0, 3.0]])  # 3 points at once
+    array([ 5.4 , -3.75,  1.45])
+    >>> from odl.discr.grid import sparse_meshgrid
+    >>> mesh = sparse_meshgrid([0.0, 0.5, 1.0], [1.5, 3.5])
+    >>> interpolator(mesh)  # 3x2 grid of points
+    array([[ 0.85,  1.65],
+           [ 3.7 ,  5.3 ],
+           [ 2.85,  3.65]])
     """
     f = np.asarray(f)
 
@@ -346,16 +397,20 @@ def linear_interpolator(f, coord_vecs):
     return linear_interp
 
 
-# TODO: doc
-def per_axis_interpolator(x, coord_vecs, schemes, nn_variants=None):
-    """Interpolator with interpolation scheme per axis.
+def per_axis_interpolator(f, coord_vecs, schemes, nn_variants=None):
+    """Return a per axis defined interpolator for discrete values.
+
+    With this function, the interpolation scheme can be chosen for each axis
+    separately.
 
     Parameters
     ----------
-    x :
-
-    coord_vecs :
-
+    f : numpy.ndarray
+        Function values that should be interpolated.
+    coord_vecs : sequence of numpy.ndarray
+        Coordinate vectors of the rectangular grid on which interpolation
+        should be based. They must be sorted in ascending order. Usually
+        they are obtained as ``grid.coord_vectors`` from a `RectGrid`.
     schemes : string or sequence of strings
         Indicates which interpolation scheme to use for which axis.
         A single string is interpreted as a global scheme for all
@@ -367,14 +422,42 @@ def per_axis_interpolator(x, coord_vecs, schemes, nn_variants=None):
         This option has no effect for schemes other than nearest
         neighbor.
 
+    Examples
+    --------
+    Choose linear interpolation in the first axis and nearest neighbor in
+    the second:
+
+    >>> part = odl.uniform_partition([0, 0], [1, 5], shape=(2, 4))
+    >>> part.coord_vectors
+    (array([ 0.25,  0.75]), array([ 0.625,  1.875,  3.125,  4.375]))
+    >>> f = np.array([[1, 2, 3, 4],
+    ...               [5, 6, 7, 8]],
+    ...              dtype=float)
+    >>> interpolator = per_axis_interpolator(
+    ...     f, part.coord_vectors, ['linear', 'nearest']
+    ... )
+    >>> interpolator([1, 1])  # single point
+    2.5
+    >>> interpolator([[0.5, 2.0],
+    ...               [0.0, 4.5],
+    ...               [0.0, 3.0]])  # 3 points at once
+    array([ 6. , -7.5,  1.5])
+    >>> from odl.discr.grid import sparse_meshgrid
+    >>> mesh = sparse_meshgrid([0.0, 0.5, 1.0], [1.5, 3.5])
+    >>> interpolator(mesh)  # 3x2 grid of points
+    array([[ 1. ,  1.5],
+           [ 4. ,  5. ],
+           [ 3. ,  3.5]])
     """
+    f = np.asarray(f)
+
     schemes_in = schemes
     if is_string(schemes):
         scheme = str(schemes).lower()
         if scheme not in _SUPPORTED_INTERP_SCHEMES:
             raise ValueError('`schemes` {!r} not understood'
                              ''.format(schemes_in))
-        schemes = [scheme] * x.ndim
+        schemes = [scheme] * f.ndim
     else:
         schemes = [str(scm).lower() if scm is not None else None
                    for scm in schemes]
@@ -397,7 +480,7 @@ def per_axis_interpolator(x, coord_vecs, schemes, nn_variants=None):
             nn_variants = [str(var).lower() if var is not None else None
                            for var in nn_variants]
 
-    for i in range(x.ndim):
+    for i in range(f.ndim):
         # Reaching a raise condition here only happens for invalid
         # sequences of inputs, single-input case has been checked above
         if schemes[i] not in _SUPPORTED_INTERP_SCHEMES:
@@ -414,14 +497,14 @@ def per_axis_interpolator(x, coord_vecs, schemes, nn_variants=None):
 
     def per_axis_interp(arg, out=None):
         """Interpolating function with vectorization."""
-        if is_valid_input_meshgrid(arg, x.ndim):
+        if is_valid_input_meshgrid(arg, f.ndim):
             input_type = 'meshgrid'
         else:
             input_type = 'array'
 
         interpolator = _PerAxisInterpolator(
             coord_vecs,
-            x,
+            f,
             schemes=schemes,
             nn_variants=nn_variants,
             input_type=input_type
