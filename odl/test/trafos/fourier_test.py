@@ -49,8 +49,16 @@ def _params_from_dtype(dtype):
 
 
 def _dft_space(shape, dtype='float64'):
+    try:
+        ndim = len(shape)
+    except TypeError:
+        ndim = 1
     return odl.uniform_discr(
-        [0, 0], shape, shape, dtype=dtype, nodes_on_bdry=True
+        [0] * ndim,
+        np.subtract(shape, 1),
+        shape,
+        dtype=dtype,
+        nodes_on_bdry=True,
     )
 
 
@@ -524,13 +532,12 @@ def test_fourier_trafo_scaling():
     def char_interval_ft(x):
         return np.exp(-1j * x / 2) * sinc(x / 2) / np.sqrt(2 * np.pi)
 
-    fspace = odl.FunctionSpace(odl.IntervalProd(-2, 2), out_dtype=complex)
-    discr = odl.uniform_discr_fromspace(fspace, 40, impl='numpy')
+    discr = odl.uniform_discr(-2, 2, 40, impl='numpy', dtype='complex128')
     dft = FourierTransform(discr)
 
     for factor in (2, 1j, -2.5j, 1 - 4j):
         func_true_ft = factor * dft.range.element(char_interval_ft)
-        func_dft = dft(factor * fspace.element(char_interval))
+        func_dft = dft(factor * discr.element(char_interval))
         assert (func_dft - func_true_ft).norm() < 1e-6
 
 
@@ -623,14 +630,11 @@ def test_fourier_trafo_hat_1d():
         return sinc(x / 2) ** 2 / np.sqrt(2 * np.pi)
 
     # Using a single-precision implementation, should be as good
-    # With linear interpolation in the discretization, should be better?
-    for interp in ['nearest', 'linear']:
-        discr = odl.uniform_discr(-2, 2, 101, impl='numpy', dtype='float32',
-                                  interp=interp)
-        dft = FourierTransform(discr)
-        func_true_ft = dft.range.element(hat_func_ft)
-        func_dft = dft(hat_func)
-        assert (func_dft - func_true_ft).norm() < 0.001
+    discr = odl.uniform_discr(-2, 2, 101, impl='numpy', dtype='float32')
+    dft = FourierTransform(discr)
+    func_true_ft = dft.range.element(hat_func_ft)
+    func_dft = dft(hat_func)
+    assert (func_dft - func_true_ft).norm() < 0.001
 
 
 def test_fourier_trafo_complex_sum():
