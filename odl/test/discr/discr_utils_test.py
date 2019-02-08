@@ -714,7 +714,7 @@ def test_nearest_interpolation_2d_string():
     # Coordinate vectors are:
     # [0.125, 0.375, 0.625, 0.875], [0.25, 0.75]
 
-    fvals = np.array([c for c in 'mystring']).reshape(part.shape)
+    fvals = np.array([c for c in 'mystring'], dtype='U1').reshape(part.shape)
     interpolator = nearest_interpolator(fvals, part.coord_vectors)
 
     # Evaluate at single point
