@@ -21,7 +21,7 @@ from odl.tomo.backends import (
     ASTRA_AVAILABLE, ASTRA_CUDA_AVAILABLE, ASTRA_VERSION, SKIMAGE_AVAILABLE,
     AstraCudaBackProjectorImpl, AstraCudaProjectorImpl,
     astra_cpu_back_projector, astra_cpu_forward_projector, astra_supports,
-    skimage_radon_back_projector, skimage_radon_forward)
+    skimage_radon_back_projector, skimage_radon_forward_projector)
 from odl.tomo.geometry import (
     Geometry, Parallel2dGeometry, Parallel3dAxisGeometry)
 
@@ -310,12 +310,17 @@ class RayTransformBase(Operator):
     def _call(self, x, out=None):
         """Return ``self(x[, out])``."""
         if self.domain.is_real:
-            return self._call_real(x, out)
+            return self._call_real(x, out, **self._extra_kwargs)
 
         elif self.domain.is_complex:
             result_parts = [
-                self._call_real(x.real, getattr(out, 'real', None)),
-                self._call_real(x.imag, getattr(out, 'imag', None))]
+                self._call_real(
+                    x.real, getattr(out, 'real', None), **self._extra_kwargs
+                ),
+                self._call_real(
+                    x.imag, getattr(out, 'imag', None), **self._extra_kwargs
+                ),
+            ]
 
             if out is None:
                 out = self.range.element()
@@ -381,7 +386,7 @@ class RayTransform(RayTransformBase):
             reco_space=domain, proj_space=range, geometry=geometry,
             variant='forward', **kwargs)
 
-    def _call_real(self, x_real, out_real):
+    def _call_real(self, x_real, out_real, **kwargs):
         """Real-space forward projection for the current set-up.
 
         This method also sets ``self._astra_projector`` for
@@ -408,9 +413,11 @@ class RayTransform(RayTransformBase):
             else:
                 # Should never happen
                 raise RuntimeError('bad `impl` {!r}'.format(self.impl))
+
         elif self.impl == 'skimage':
-            return skimage_radon_forward(x_real, self.geometry,
-                                         self.range.real_space, out_real)
+            return skimage_radon_forward_projector(
+                x_real, self.geometry, self.range.real_space, out_real,
+                **kwargs)
         else:
             # Should never happen
             raise RuntimeError('bad `impl` {!r}'.format(self.impl))

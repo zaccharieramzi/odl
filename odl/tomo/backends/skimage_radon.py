@@ -23,7 +23,7 @@ except ImportError:
     SKIMAGE_AVAILABLE = False
 
 
-__all__ = ('skimage_radon_forward', 'skimage_radon_back_projector',
+__all__ = ('skimage_radon_forward_projector', 'skimage_radon_back_projector',
            'SKIMAGE_AVAILABLE')
 
 
@@ -63,7 +63,8 @@ def clamped_interpolation(skimage_range, sinogram):
     return interpolator
 
 
-def skimage_radon_forward(volume, geometry, sinogram_space, out=None):
+def skimage_radon_forward_projector(volume, geometry, sinogram_space,
+                                    out=None):
     """Calculate forward projection using skimage.
 
     Parameters
