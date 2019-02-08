@@ -71,10 +71,6 @@ class RayTransformBase(Operator):
             For the default ``None``, the fastest available back-end is
             used.
 
-        interp : {'nearest', 'linear'}, optional
-            Interpolation type for the discretization of the projection
-            space. This has no effect if ``proj_space`` is given explicitly.
-            Default: ``'nearest'``
         proj_space : `DiscreteLp`, optional
             Discretized projection (sinogram) space, the range of the forward
             operator or the domain of the adjoint (back-projection).
@@ -85,6 +81,8 @@ class RayTransformBase(Operator):
             and on the CPU, since a full volume and a projection dataset
             are stored. That may be prohibitive in 3D.
             Default: True
+        kwargs
+            Further keyword arguments passed to the projector backend.
 
         Notes
         -----
@@ -142,7 +140,7 @@ class RayTransformBase(Operator):
                         "`impl='skimage'`.",
                         RuntimeWarning)
             else:
-                raise RuntimeError('bad impl')
+                raise RuntimeError('no backend')
 
         impl, impl_in = str(impl).lower(), impl
         if impl not in _SUPPORTED_IMPL:
@@ -361,10 +359,6 @@ class RayTransform(RayTransformBase):
 
             For the default ``None``, the fastest available back-end is
             used, tried in the above order.
-        interp : {'nearest', 'linear'}, optional
-            Interpolation type for the discretization of the operator
-            range. This has no effect if ``range`` is given explicitly.
-            Default: ``'nearest'``
         range : `DiscreteLp`, optional
             Discretized projection (sinogram) space, the range of the
             forward projector.
@@ -375,11 +369,20 @@ class RayTransform(RayTransformBase):
             and on the CPU, since a full volume and a projection dataset
             are stored. That may be prohibitive in 3D.
             Default: True
+        kwargs
+            Further keyword arguments passed to the projector backend.
 
         Notes
         -----
-        The ASTRA backend is faster if data is given with ``dtype`` 'float32'
-        and storage order 'C'. Otherwise copies will be needed.
+        The ASTRA backend is faster if data are given with
+        ``dtype='float32'`` and storage order 'C'. Otherwise copies will be
+        needed.
+
+        See Also
+        --------
+        astra_cpu_forward_projector
+        AstraCudaProjectorImpl
+        skimage_radon_forward_projector
         """
         range = kwargs.pop('range', None)
         super(RayTransform, self).__init__(
@@ -397,7 +400,8 @@ class RayTransform(RayTransformBase):
 
             if data_impl == 'cpu':
                 return astra_cpu_forward_projector(
-                    x_real, self.geometry, self.range.real_space, out_real)
+                    x_real, self.geometry, self.range.real_space, out_real,
+                    **kwargs)
 
             elif data_impl == 'cuda':
                 if self._astra_wrapper is None:
@@ -409,7 +413,7 @@ class RayTransform(RayTransformBase):
                 else:
                     astra_wrapper = self._astra_wrapper
 
-                return astra_wrapper.call_forward(x_real, out_real)
+                return astra_wrapper.call_forward(x_real, out_real, **kwargs)
             else:
                 # Should never happen
                 raise RuntimeError('bad `impl` {!r}'.format(self.impl))
@@ -471,10 +475,6 @@ class RayBackProjection(RayTransformBase):
             For the default ``None``, the fastest available back-end is
             used, tried in the above order.
 
-        interp : {'nearest', 'linear'}, optional
-            Interpolation type for the discretization of the operator
-            domain. This has no effect if ``domain`` is given explicitly.
-            Default: ``'nearest'``
         domain : `DiscreteLp`, optional
             Discretized projection (sinogram) space, the domain of the
             backprojection operator.
@@ -485,18 +485,27 @@ class RayBackProjection(RayTransformBase):
             and on the CPU, since a full volume and a projection dataset
             are stored. That may be prohibitive in 3D.
             Default: True
+        kwargs
+            Further keyword arguments passed to the projector backend.
 
         Notes
         -----
-        The ASTRA backend is faster if data is given with ``dtype`` 'float32'
-        and storage order 'C'. Otherwise copies will be needed.
+        The ASTRA backend is faster if data are given with
+        ``dtype='float32'`` and storage order 'C'. Otherwise copies will be
+        needed.
+
+        See Also
+        --------
+        astra_cpu_back_projector
+        AstraCudaBackProjectorImpl
+        skimage_radon_back_projector
         """
         domain = kwargs.pop('domain', None)
         super(RayBackProjection, self).__init__(
             reco_space=range, proj_space=domain, geometry=geometry,
             variant='backward', **kwargs)
 
-    def _call_real(self, x_real, out_real):
+    def _call_real(self, x_real, out_real, **kwargs):
         """Real-space back-projection for the current set-up.
 
         This method also sets ``self._astra_backprojector`` for
@@ -505,9 +514,9 @@ class RayBackProjection(RayTransformBase):
         if self.impl.startswith('astra'):
             backend, data_impl = self.impl.split('_')
             if data_impl == 'cpu':
-                return astra_cpu_back_projector(x_real, self.geometry,
-                                                self.range.real_space,
-                                                out_real)
+                return astra_cpu_back_projector(
+                    x_real, self.geometry, self.range.real_space, out_real,
+                    **kwargs)
             elif data_impl == 'cuda':
                 if self._astra_wrapper is None:
                     astra_wrapper = AstraCudaBackProjectorImpl(
@@ -518,15 +527,15 @@ class RayBackProjection(RayTransformBase):
                 else:
                     astra_wrapper = self._astra_wrapper
 
-                return astra_wrapper.call_backward(x_real, out_real)
+                return astra_wrapper.call_backward(x_real, out_real, **kwargs)
             else:
                 # Should never happen
                 raise RuntimeError('bad `impl` {!r}'.format(self.impl))
 
         elif self.impl == 'skimage':
-            return skimage_radon_back_projector(x_real, self.geometry,
-                                                self.range.real_space,
-                                                out_real)
+            return skimage_radon_back_projector(
+                x_real, self.geometry, self.range.real_space, out_real,
+                **kwargs)
         else:
             # Should never happen
             raise RuntimeError('bad `impl` {!r}'.format(self.impl))
