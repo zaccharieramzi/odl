@@ -1,4 +1,4 @@
-# Copyright 2014-2017 The ODL contributors
+# Copyright 2014-2019 The ODL contributors
 #
 # This file is part of ODL.
 #
@@ -9,14 +9,19 @@
 """Radon transform (ray transform) in 2d using skimage.transform."""
 
 from __future__ import division
+
 import numpy as np
+
+from odl.discr import uniform_discr_frompartition, uniform_partition
+from odl.discr.discr_utils import linear_interpolator, point_collocation
+from odl.util.utility import writable_array
+
 try:
     import skimage
     SKIMAGE_AVAILABLE = True
 except ImportError:
     SKIMAGE_AVAILABLE = False
 
-from odl.discr import uniform_discr_frompartition, uniform_partition
 
 __all__ = ('skimage_radon_forward', 'skimage_radon_back_projector',
            'SKIMAGE_AVAILABLE')
@@ -39,41 +44,38 @@ def skimage_sinogram_space(geometry, volume_space, sinogram_space):
         1, skimage_detector_part)
 
     skimage_range = uniform_discr_frompartition(skimage_range_part,
-                                                interp=sinogram_space.interp,
                                                 dtype=sinogram_space.dtype)
 
     return skimage_range
 
 
 def clamped_interpolation(skimage_range, sinogram):
-    """Interpolate in a possibly smaller space.
-
-    Sets all points that would be outside the domain to match the
-    boundary values.
-    """
+    """Return interpolator that clamps points to min/max of the space."""
     min_x = skimage_range.domain.min()[1]
     max_x = skimage_range.domain.max()[1]
 
-    def interpolation_wrapper(x):
+    def interpolator(x, out=None):
         x = (x[0], np.maximum(min_x, np.minimum(max_x, x[1])))
+        interpolator = linear_interpolator(
+            sinogram, skimage_range.grid.coord_vectors
+        )
+        return interpolator(x, out=out)
+    return interpolator
 
-        return sinogram.interpolation(x)
-    return interpolation_wrapper
 
-
-def skimage_radon_forward(volume, geometry, range, out=None):
+def skimage_radon_forward(volume, geometry, sinogram_space, out=None):
     """Calculate forward projection using skimage.
 
     Parameters
     ----------
     volume : `DiscreteLpElement`
-        The volume to project
+        The volume to project.
     geometry : `Geometry`
-        The projection geometry to use
-    range : `DiscreteLp`
-        range of this projection (sinogram space)
+        The projection geometry to use.
+    sinogram_space : `DiscreteLp`
+        Range of this projector.
     out : ``range`` element, optional
-        An element in range that the result should be written to
+        An element in ``sinogram_space`` to which the result should be written.
 
     Returns
     -------
@@ -87,26 +89,32 @@ def skimage_radon_forward(volume, geometry, range, out=None):
     assert volume.shape[0] == volume.shape[1]
 
     theta = skimage_theta(geometry)
-    skimage_range = skimage_sinogram_space(geometry, volume.space, range)
+    skimage_sino_space = skimage_sinogram_space(
+        geometry, volume.space, sinogram_space
+    )
 
     # Rotate volume from (x, y) to (rows, cols)
     sino_arr = radon(np.rot90(volume.asarray(), 1),
                      theta=theta, circle=False)
-    sinogram = skimage_range.element(sino_arr.T)
+    sinogram = skimage_sino_space.element(sino_arr.T)
 
     if out is None:
-        out = range.element()
+        out = sinogram_space.element()
 
-    out.sampling(clamped_interpolation(skimage_range, sinogram))
+    with writable_array(out) as out_arr:
+        point_collocation(
+            clamped_interpolation(skimage_sino_space, sinogram),
+            sinogram_space.grid.meshgrid,
+            out=out_arr,
+        )
 
     scale = volume.space.cell_sides[0]
-
     out *= scale
 
     return out
 
 
-def skimage_radon_back_projector(sinogram, geometry, range, out=None):
+def skimage_radon_back_projector(sinogram, geometry, volume_space, out=None):
     """Calculate forward projection using skimage.
 
     Parameters
@@ -115,8 +123,8 @@ def skimage_radon_back_projector(sinogram, geometry, range, out=None):
         Sinogram (projections) to backproject.
     geometry : `Geometry`
         The projection geometry to use.
-    range : `DiscreteLp`
-        range of this projection (volume space).
+    volume_space : `DiscreteLp`
+        Range of this backprojector.
     out : ``range`` element, optional
         An element in range that the result should be written to.
 
@@ -129,20 +137,29 @@ def skimage_radon_back_projector(sinogram, geometry, range, out=None):
     from skimage.transform import iradon
 
     theta = skimage_theta(geometry)
-    skimage_range = skimage_sinogram_space(geometry, range, sinogram.space)
+    skimage_range = skimage_sinogram_space(geometry, volume_space, sinogram.space)
 
     skimage_sinogram = skimage_range.element()
-    skimage_sinogram.sampling(clamped_interpolation(range, sinogram))
+    with writable_array(skimage_sinogram) as sino_arr:
+        point_collocation(
+            clamped_interpolation(sinogram.space, sinogram),
+            skimage_range.grid.meshgrid,
+            out=sino_arr,
+        )
 
     if out is None:
-        out = range.element()
+        out = volume_space.element()
     else:
         # Only do asserts here since these are backend functions
-        assert out in range
+        assert out in volume_space
 
     # Rotate back from (rows, cols) to (x, y)
-    backproj = iradon(skimage_sinogram.asarray().T, theta,
-                      output_size=range.shape[0], filter=None, circle=False)
+    backproj = iradon(
+        skimage_sinogram.asarray().T, theta,
+        output_size=volume_space.shape[0],
+        filter=None,
+        circle=False,
+    )
     out[:] = np.rot90(backproj, -1)
 
     # Empirically determined value, gives correct scaling
@@ -155,8 +172,8 @@ def skimage_radon_back_projector(sinogram, geometry, range, out=None):
 
     scaling_factor *= (sinogram.space.weighting.const /
                        proj_weighting)
-    scaling_factor /= (range.weighting.const /
-                       range.cell_volume)
+    scaling_factor /= (volume_space.weighting.const /
+                       volume_space.cell_volume)
 
     # Correctly scale the output
     out *= scaling_factor

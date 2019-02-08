@@ -534,11 +534,11 @@ scipy.interpolate.RegularGridInterpolator.html>`_ class.
         """Initialize a new instance.
 
         coord_vecs : sequence of `numpy.ndarray`'s
-            Coordinate vectors defining the interpolation grid
+            Coordinate vectors defining the interpolation grid.
         values : `array-like`
-            Grid values to use for interpolation
+            Grid values to use for interpolation.
         input_type : {'array', 'meshgrid'}
-            Type of expected input values in ``__call__``
+            Type of expected input values in ``__call__``.
         """
         values = np.asarray(values)
         typ_ = str(input_type).lower()
