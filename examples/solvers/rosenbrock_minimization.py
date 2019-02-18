@@ -40,7 +40,7 @@ x = space.zero()
 odl.solvers.steepest_descent(f, x, line_search=line_search,
                              callback=callback)
 legend_artists = [callback.ax.collections[-1], ]
-legend_labels = ['SD', ]
+legend_labels = ['SD']
 
 # Solve problem using nonlinear conjugate gradient
 callback = odl.solvers.CallbackShowConvergence(f, logx=True, logy=True,

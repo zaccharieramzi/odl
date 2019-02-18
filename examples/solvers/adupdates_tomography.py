@@ -141,8 +141,7 @@ L = [nonneg_operator] + ray_trafos + tv_operators
 inner_stepsizes = [nonneg_stepsize] + data_fit_stepsizes + tv_stepsizes
 
 odl.solvers.adupdates(x, g, L, stepsize=1.0, inner_stepsizes=inner_stepsizes,
-                      niter=5, random=RANDOM, callback=None,
-                      callback_loop=None)
+                      niter=5, random=RANDOM)
 
 # Show the result within a window between zero and one.
-x.show(vmin=0.0, vmax=1.0)
+x.show('Reconstruction', vmin=0.0, vmax=1.0)

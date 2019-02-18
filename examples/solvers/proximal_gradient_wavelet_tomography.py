@@ -74,19 +74,14 @@ gamma = 0.2
 
 # Optionally pass callback to the solver to display intermediate results
 callback = (odl.solvers.CallbackPrintIteration() &
-            odl.solvers.CallbackShow(step=5))
-
-
-def callb(x):
-    """Callback that displays the inverse wavelet transform of current iter."""
-    callback(Wtrafoinv(x))
+            odl.solvers.CallbackShow(step=5) * Wtrafoinv)
 
 
 # Run the algorithm (FISTA)
 x = data_discrepancy.domain.zero()
 odl.solvers.accelerated_proximal_gradient(
     x, f=regularizer, g=data_discrepancy, niter=400, gamma=gamma,
-    callback=callb)
+    callback=callback)
 
 # Display images
 data.show(title='Data')

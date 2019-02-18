@@ -153,8 +153,10 @@ class AstraCudaProjectorImpl(object):
                                  data=self.in_array,
                                  allow_copy=False)
 
-        self.proj_id = astra_projector('nearest', vol_geom, proj_geom,
-                                       ndim=proj_ndim, impl='cuda')
+        proj_type = 'cuda' if proj_ndim == 2 else 'cuda3d'
+        self.proj_id = astra_projector(
+            proj_type, vol_geom, proj_geom, proj_ndim
+        )
 
         self.sino_id = astra_data(proj_geom,
                                   datatype='projection',
@@ -303,8 +305,10 @@ class AstraCudaBackProjectorImpl(object):
                                   ndim=proj_ndim,
                                   allow_copy=False)
 
-        self.proj_id = astra_projector('nearest', vol_geom, proj_geom,
-                                       proj_ndim, impl='cuda')
+        proj_type = 'cuda' if proj_ndim == 2 else 'cuda3d'
+        self.proj_id = astra_projector(
+            proj_type, vol_geom, proj_geom, proj_ndim
+        )
 
         self.vol_id = astra_data(vol_geom,
                                  datatype='volume',

@@ -9,7 +9,6 @@ streak artefacts and a wrong scaling. This can be reduced using a
 Tam-Danielson window.
 """
 
-import numpy as np
 import odl
 
 
