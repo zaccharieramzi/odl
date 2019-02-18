@@ -620,7 +620,6 @@ class DiscreteLp(TensorSpace):
         return repr(self)
 
 
-
 class DiscreteLpElement(Tensor):
 
     """Representation of a `DiscreteLp` element."""
@@ -1231,12 +1230,14 @@ class DiscreteLpElement(Tensor):
             # axes are being completely collapsed or don't change size.
             raise ValueError('`reduceat` not supported')
 
-        elif (method == 'outer' and
-              not all(isinstance(inp, type(self)) for inp in inputs)):
-                raise TypeError(
-                    "inputs must be of type {} for `method='outer'`, "
-                    'got types {}'
-                    ''.format(type(self), tuple(type(inp) for inp in inputs)))
+        elif (
+            method == 'outer'
+            and not all(isinstance(inp, type(self)) for inp in inputs)
+        ):
+            raise TypeError(
+                "inputs must be of type {} for `method='outer'`, got types "
+                '{}'.format(type(self), tuple(type(inp) for inp in inputs))
+            )
 
         else:  # method != '__call__', and otherwise valid
 

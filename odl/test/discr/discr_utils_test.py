@@ -885,7 +885,9 @@ def test_collocation_interpolation_identity():
     part = odl.uniform_partition([0, 0], [1, 1], (4, 2))
     fvals = np.arange(1, 9, dtype='float64').reshape(part.shape)
 
-    collocator = lambda f: point_collocation(f, part.meshgrid)
+    def collocator(f):
+        return point_collocation(f, part.meshgrid)
+
     interpolators = [
         nearest_interpolator(fvals, part.coord_vectors, variant='left'),
         nearest_interpolator(fvals, part.coord_vectors, variant='right'),

@@ -138,7 +138,9 @@ def skimage_radon_back_projector(sinogram, geometry, volume_space, out=None):
     from skimage.transform import iradon
 
     theta = skimage_theta(geometry)
-    skimage_range = skimage_sinogram_space(geometry, volume_space, sinogram.space)
+    skimage_range = skimage_sinogram_space(
+        geometry, volume_space, sinogram.space
+    )
 
     skimage_sinogram = skimage_range.element()
     with writable_array(skimage_sinogram) as sino_arr:

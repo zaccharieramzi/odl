@@ -29,6 +29,9 @@ except ImportError:
 __all__ = ('astra_cpu_forward_projector', 'astra_cpu_back_projector')
 
 
+# TODO: is magnification scaling at the right place?
+
+
 def _default_proj_type(geom):
     """Return the default projector type for a given geometry."""
     if isinstance(geom, ParallelBeamGeometry):
@@ -41,7 +44,6 @@ def _default_proj_type(geom):
             ''.format(type(geom))
         )
 
-# TODO: is magnification scaling at the right place?
 
 def astra_cpu_forward_projector(vol_data, geometry, proj_space, out=None,
                                 proj_type=None):

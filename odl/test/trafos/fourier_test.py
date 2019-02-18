@@ -39,7 +39,6 @@ sign = simple_fixture('sign', ['-', '+'])
 # --- Helper functions --- #
 
 
-
 def _params_from_dtype(dtype):
     if is_real_dtype(dtype):
         halfcomplex = True
