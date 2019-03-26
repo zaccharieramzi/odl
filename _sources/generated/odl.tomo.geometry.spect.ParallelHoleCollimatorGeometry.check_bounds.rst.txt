@@ -1,0 +1,6 @@
+ParallelHoleCollimatorGeometry.check_bounds
+===================================================================
+
+.. currentmodule:: odl.tomo.geometry.spect
+
+.. autoattribute:: ParallelHoleCollimatorGeometry.check_bounds

@@ -1,0 +1,6 @@
+OperatorPointwiseProduct.is_functional
+============================================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorPointwiseProduct.is_functional

@@ -1,0 +1,6 @@
+DiagonalOperator.inverse
+================================================
+
+.. currentmodule:: odl.operator.pspace_ops
+
+.. autoattribute:: DiagonalOperator.inverse

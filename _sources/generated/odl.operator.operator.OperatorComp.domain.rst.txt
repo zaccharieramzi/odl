@@ -1,0 +1,6 @@
+OperatorComp.domain
+=========================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorComp.domain

@@ -1,0 +1,6 @@
+FunctionalLeftScalarMult.is_functional
+========================================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalLeftScalarMult.is_functional

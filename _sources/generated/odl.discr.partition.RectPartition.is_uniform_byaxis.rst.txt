@@ -1,0 +1,6 @@
+RectPartition.is_uniform_byaxis
+===================================================
+
+.. currentmodule:: odl.discr.partition
+
+.. autoattribute:: RectPartition.is_uniform_byaxis

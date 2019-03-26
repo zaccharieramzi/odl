@@ -1,0 +1,6 @@
+ScalingFunctional.gradient
+=====================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: ScalingFunctional.gradient

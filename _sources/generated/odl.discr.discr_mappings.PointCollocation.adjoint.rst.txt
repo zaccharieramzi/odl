@@ -1,0 +1,6 @@
+PointCollocation.adjoint
+=================================================
+
+.. currentmodule:: odl.discr.discr_mappings
+
+.. autoattribute:: PointCollocation.adjoint

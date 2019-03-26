@@ -1,0 +1,6 @@
+PerAxisInterpolation.nn_variants
+=========================================================
+
+.. currentmodule:: odl.discr.discr_mappings
+
+.. autoattribute:: PerAxisInterpolation.nn_variants

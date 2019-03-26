@@ -1,0 +1,6 @@
+IndicatorNuclearNormUnitBall.inverse
+===============================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: IndicatorNuclearNormUnitBall.inverse

@@ -1,0 +1,6 @@
+ParallelBeamGeometry.motion_partition
+================================================================
+
+.. currentmodule:: odl.tomo.geometry.parallel
+
+.. autoattribute:: ParallelBeamGeometry.motion_partition

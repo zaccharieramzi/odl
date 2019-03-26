@@ -1,0 +1,6 @@
+ProductSpace.weighting
+=======================================
+
+.. currentmodule:: odl.space.pspace
+
+.. autoattribute:: ProductSpace.weighting

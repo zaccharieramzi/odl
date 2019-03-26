@@ -1,0 +1,6 @@
+IndicatorNonnegativity.is_linear
+===========================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: IndicatorNonnegativity.is_linear

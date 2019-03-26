@@ -1,0 +1,6 @@
+Parallel3dEulerGeometry.motion_grid
+==============================================================
+
+.. currentmodule:: odl.tomo.geometry.parallel
+
+.. autoattribute:: Parallel3dEulerGeometry.motion_grid

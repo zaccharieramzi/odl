@@ -1,0 +1,6 @@
+NearestInterpolation.is_functional
+===========================================================
+
+.. currentmodule:: odl.discr.discr_mappings
+
+.. autoattribute:: NearestInterpolation.is_functional

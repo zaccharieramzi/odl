@@ -1,0 +1,6 @@
+sign_func.proximal
+==========================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: sign_func.proximal

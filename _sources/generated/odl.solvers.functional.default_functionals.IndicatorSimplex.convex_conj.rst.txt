@@ -1,0 +1,6 @@
+IndicatorSimplex.convex_conj
+=======================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: IndicatorSimplex.convex_conj

@@ -1,0 +1,6 @@
+Detector.shape
+=========================================
+
+.. currentmodule:: odl.tomo.geometry.detector
+
+.. autoattribute:: Detector.shape

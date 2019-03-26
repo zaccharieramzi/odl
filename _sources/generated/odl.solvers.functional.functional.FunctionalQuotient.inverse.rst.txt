@@ -1,0 +1,6 @@
+FunctionalQuotient.inverse
+============================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalQuotient.inverse

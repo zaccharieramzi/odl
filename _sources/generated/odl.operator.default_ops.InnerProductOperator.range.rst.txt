@@ -1,0 +1,6 @@
+InnerProductOperator.range
+===================================================
+
+.. currentmodule:: odl.operator.default_ops
+
+.. autoattribute:: InnerProductOperator.range

@@ -1,0 +1,6 @@
+ScalingFunctional.is_linear
+======================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: ScalingFunctional.is_linear

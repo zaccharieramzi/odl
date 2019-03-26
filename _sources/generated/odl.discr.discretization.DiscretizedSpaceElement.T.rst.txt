@@ -1,0 +1,6 @@
+DiscretizedSpaceElement.T
+==================================================
+
+.. currentmodule:: odl.discr.discretization
+
+.. autoattribute:: DiscretizedSpaceElement.T

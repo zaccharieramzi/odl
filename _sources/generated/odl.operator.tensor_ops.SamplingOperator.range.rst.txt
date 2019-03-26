@@ -1,0 +1,6 @@
+SamplingOperator.range
+==============================================
+
+.. currentmodule:: odl.operator.tensor_ops
+
+.. autoattribute:: SamplingOperator.range

@@ -1,0 +1,6 @@
+ConeFlatGeometry.angles
+==================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: ConeFlatGeometry.angles

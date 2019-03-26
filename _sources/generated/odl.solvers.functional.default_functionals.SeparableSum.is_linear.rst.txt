@@ -1,0 +1,6 @@
+SeparableSum.is_linear
+=================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: SeparableSum.is_linear

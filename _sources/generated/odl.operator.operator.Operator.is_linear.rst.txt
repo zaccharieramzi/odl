@@ -1,0 +1,6 @@
+Operator.is_linear
+========================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: Operator.is_linear

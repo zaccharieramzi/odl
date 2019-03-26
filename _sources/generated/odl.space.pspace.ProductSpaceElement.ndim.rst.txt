@@ -1,0 +1,6 @@
+ProductSpaceElement.ndim
+=========================================
+
+.. currentmodule:: odl.space.pspace
+
+.. autoattribute:: ProductSpaceElement.ndim

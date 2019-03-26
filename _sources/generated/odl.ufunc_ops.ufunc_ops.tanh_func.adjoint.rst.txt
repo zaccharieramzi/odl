@@ -1,0 +1,6 @@
+tanh_func.adjoint
+=========================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: tanh_func.adjoint

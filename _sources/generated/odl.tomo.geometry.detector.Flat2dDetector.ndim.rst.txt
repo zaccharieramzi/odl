@@ -1,0 +1,6 @@
+Flat2dDetector.ndim
+==============================================
+
+.. currentmodule:: odl.tomo.geometry.detector
+
+.. autoattribute:: Flat2dDetector.ndim

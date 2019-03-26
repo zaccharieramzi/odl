@@ -1,0 +1,6 @@
+ComplexEmbedding.range
+===============================================
+
+.. currentmodule:: odl.operator.default_ops
+
+.. autoattribute:: ComplexEmbedding.range

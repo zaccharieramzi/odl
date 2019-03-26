@@ -1,0 +1,6 @@
+LinearSpace.element_type
+======================================
+
+.. currentmodule:: odl.set.space
+
+.. autoattribute:: LinearSpace.element_type

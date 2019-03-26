@@ -1,0 +1,6 @@
+OperatorSum.left
+======================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorSum.left

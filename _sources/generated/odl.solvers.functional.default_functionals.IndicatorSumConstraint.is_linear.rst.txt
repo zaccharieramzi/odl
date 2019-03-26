@@ -1,0 +1,6 @@
+IndicatorSumConstraint.is_linear
+===========================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: IndicatorSumConstraint.is_linear

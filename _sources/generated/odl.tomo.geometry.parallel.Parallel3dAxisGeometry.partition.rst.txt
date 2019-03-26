@@ -1,0 +1,6 @@
+Parallel3dAxisGeometry.partition
+===========================================================
+
+.. currentmodule:: odl.tomo.geometry.parallel
+
+.. autoattribute:: Parallel3dAxisGeometry.partition

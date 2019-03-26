@@ -1,0 +1,6 @@
+FunctionalQuotient.domain
+===========================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalQuotient.domain

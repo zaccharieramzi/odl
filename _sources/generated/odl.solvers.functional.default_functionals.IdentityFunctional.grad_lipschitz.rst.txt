@@ -1,0 +1,6 @@
+IdentityFunctional.grad_lipschitz
+============================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: IdentityFunctional.grad_lipschitz

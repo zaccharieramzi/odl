@@ -1,0 +1,6 @@
+ComplexEmbedding.is_functional
+=======================================================
+
+.. currentmodule:: odl.operator.default_ops
+
+.. autoattribute:: ComplexEmbedding.is_functional

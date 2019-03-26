@@ -1,0 +1,6 @@
+absolute_op.is_linear
+=============================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: absolute_op.is_linear

@@ -1,0 +1,6 @@
+KullbackLeiblerCrossEntropy.gradient
+===============================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: KullbackLeiblerCrossEntropy.gradient

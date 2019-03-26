@@ -1,0 +1,6 @@
+PointwiseTensorFieldOperator.is_linear
+==============================================================
+
+.. currentmodule:: odl.operator.tensor_ops
+
+.. autoattribute:: PointwiseTensorFieldOperator.is_linear

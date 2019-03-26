@@ -1,0 +1,6 @@
+FunctionalDefaultConvexConjugate.grad_lipschitz
+=================================================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalDefaultConvexConjugate.grad_lipschitz

@@ -1,0 +1,6 @@
+floor_op.domain
+=======================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: floor_op.domain

@@ -1,0 +1,6 @@
+DiscreteLp.max_pt
+====================================
+
+.. currentmodule:: odl.discr.lp_discr
+
+.. autoattribute:: DiscreteLp.max_pt

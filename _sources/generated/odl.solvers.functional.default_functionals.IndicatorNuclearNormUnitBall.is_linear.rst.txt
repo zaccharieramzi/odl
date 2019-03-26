@@ -1,0 +1,6 @@
+IndicatorNuclearNormUnitBall.is_linear
+=================================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: IndicatorNuclearNormUnitBall.is_linear

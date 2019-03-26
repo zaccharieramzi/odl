@@ -1,0 +1,6 @@
+PointwiseNorm.exponent
+==============================================
+
+.. currentmodule:: odl.operator.tensor_ops
+
+.. autoattribute:: PointwiseNorm.exponent

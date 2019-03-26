@@ -1,0 +1,6 @@
+KullbackLeiblerConvexConj.range
+==========================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: KullbackLeiblerConvexConj.range

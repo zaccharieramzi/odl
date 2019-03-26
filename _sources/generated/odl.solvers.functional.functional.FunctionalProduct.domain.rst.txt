@@ -1,0 +1,6 @@
+FunctionalProduct.domain
+==========================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalProduct.domain

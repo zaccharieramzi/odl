@@ -1,0 +1,6 @@
+InnerProductOperator.is_linear
+=======================================================
+
+.. currentmodule:: odl.operator.default_ops
+
+.. autoattribute:: InnerProductOperator.is_linear

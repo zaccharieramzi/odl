@@ -1,0 +1,6 @@
+FourierTransformBase.is_functional
+=====================================================
+
+.. currentmodule:: odl.trafos.fourier
+
+.. autoattribute:: FourierTransformBase.is_functional

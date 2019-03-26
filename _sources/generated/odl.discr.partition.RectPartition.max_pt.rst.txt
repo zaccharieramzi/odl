@@ -1,0 +1,6 @@
+RectPartition.max_pt
+========================================
+
+.. currentmodule:: odl.discr.partition
+
+.. autoattribute:: RectPartition.max_pt

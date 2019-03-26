@@ -1,0 +1,6 @@
+ProductSpaceCustomNorm.impl
+============================================
+
+.. currentmodule:: odl.space.pspace
+
+.. autoattribute:: ProductSpaceCustomNorm.impl

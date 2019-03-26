@@ -1,0 +1,6 @@
+DiscreteLp.interp_byaxis
+===========================================
+
+.. currentmodule:: odl.discr.lp_discr
+
+.. autoattribute:: DiscreteLp.interp_byaxis

@@ -1,0 +1,6 @@
+Huber.grad_lipschitz
+===============================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: Huber.grad_lipschitz

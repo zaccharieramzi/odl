@@ -1,0 +1,6 @@
+SamplingOperator.is_linear
+==================================================
+
+.. currentmodule:: odl.operator.tensor_ops
+
+.. autoattribute:: SamplingOperator.is_linear

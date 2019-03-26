@@ -1,0 +1,6 @@
+bitwise_or_op.range
+===========================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: bitwise_or_op.range

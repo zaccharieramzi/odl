@@ -1,0 +1,6 @@
+QuadraticForm.is_linear
+==================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: QuadraticForm.is_linear

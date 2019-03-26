@@ -1,0 +1,6 @@
+FunctionSpaceElement.out_shape
+===============================================
+
+.. currentmodule:: odl.space.fspace
+
+.. autoattribute:: FunctionSpaceElement.out_shape

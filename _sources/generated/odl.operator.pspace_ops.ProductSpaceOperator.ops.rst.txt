@@ -1,0 +1,6 @@
+ProductSpaceOperator.ops
+================================================
+
+.. currentmodule:: odl.operator.pspace_ops
+
+.. autoattribute:: ProductSpaceOperator.ops

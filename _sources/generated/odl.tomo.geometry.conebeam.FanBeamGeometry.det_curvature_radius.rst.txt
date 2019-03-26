@@ -1,0 +1,6 @@
+FanBeamGeometry.det_curvature_radius
+===============================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: FanBeamGeometry.det_curvature_radius

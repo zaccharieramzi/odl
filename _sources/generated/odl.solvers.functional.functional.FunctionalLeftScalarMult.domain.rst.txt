@@ -1,0 +1,6 @@
+FunctionalLeftScalarMult.domain
+=================================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalLeftScalarMult.domain

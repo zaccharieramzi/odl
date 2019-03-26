@@ -1,0 +1,6 @@
+FunctionSpace.out_dtype
+========================================
+
+.. currentmodule:: odl.space.fspace
+
+.. autoattribute:: FunctionSpace.out_dtype

@@ -1,0 +1,6 @@
+ConeFlatGeometry.offset_along_axis
+=============================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: ConeFlatGeometry.offset_along_axis

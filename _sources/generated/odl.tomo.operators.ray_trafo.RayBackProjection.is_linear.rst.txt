@@ -1,0 +1,6 @@
+RayBackProjection.is_linear
+========================================================
+
+.. currentmodule:: odl.tomo.operators.ray_trafo
+
+.. autoattribute:: RayBackProjection.is_linear

@@ -1,0 +1,6 @@
+OperatorSum.inverse
+=========================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorSum.inverse

@@ -1,0 +1,6 @@
+Parallel2dGeometry.motion_params
+===========================================================
+
+.. currentmodule:: odl.tomo.geometry.parallel
+
+.. autoattribute:: Parallel2dGeometry.motion_params

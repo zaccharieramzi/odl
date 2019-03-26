@@ -1,0 +1,6 @@
+FunctionalRightVectorMult.is_functional
+=========================================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalRightVectorMult.is_functional

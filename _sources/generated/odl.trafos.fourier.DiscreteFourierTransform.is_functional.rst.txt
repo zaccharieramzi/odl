@@ -1,0 +1,6 @@
+DiscreteFourierTransform.is_functional
+=========================================================
+
+.. currentmodule:: odl.trafos.fourier
+
+.. autoattribute:: DiscreteFourierTransform.is_functional

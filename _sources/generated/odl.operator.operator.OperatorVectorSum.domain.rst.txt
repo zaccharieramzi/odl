@@ -1,0 +1,6 @@
+OperatorVectorSum.domain
+==============================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorVectorSum.domain

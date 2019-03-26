@@ -1,0 +1,6 @@
+Strings.length
+===========================
+
+.. currentmodule:: odl.set.sets
+
+.. autoattribute:: Strings.length

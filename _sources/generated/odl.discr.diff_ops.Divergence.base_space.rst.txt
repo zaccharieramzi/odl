@@ -1,0 +1,6 @@
+Divergence.base_space
+========================================
+
+.. currentmodule:: odl.discr.diff_ops
+
+.. autoattribute:: Divergence.base_space

@@ -1,0 +1,6 @@
+ConeFlatGeometry.translation
+=======================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: ConeFlatGeometry.translation

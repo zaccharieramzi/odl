@@ -1,0 +1,6 @@
+Resampling.inverse
+======================================
+
+.. currentmodule:: odl.discr.discr_ops
+
+.. autoattribute:: Resampling.inverse

@@ -1,0 +1,6 @@
+Resampling.domain
+=====================================
+
+.. currentmodule:: odl.discr.discr_ops
+
+.. autoattribute:: Resampling.domain

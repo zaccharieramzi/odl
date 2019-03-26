@@ -1,0 +1,6 @@
+RosenbrockFunctional.gradient
+==================================================================
+
+.. currentmodule:: odl.solvers.functional.example_funcs
+
+.. autoattribute:: RosenbrockFunctional.gradient

@@ -1,0 +1,6 @@
+ProductSpaceOperator.size
+=================================================
+
+.. currentmodule:: odl.operator.pspace_ops
+
+.. autoattribute:: ProductSpaceOperator.size

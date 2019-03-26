@@ -1,0 +1,6 @@
+tanh_func.gradient
+==========================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: tanh_func.gradient

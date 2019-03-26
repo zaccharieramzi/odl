@@ -1,0 +1,6 @@
+IntervalProd.length
+==================================
+
+.. currentmodule:: odl.set.domain
+
+.. autoattribute:: IntervalProd.length

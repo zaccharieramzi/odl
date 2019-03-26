@@ -1,0 +1,6 @@
+DiscreteFourierTransform.adjoint
+===================================================
+
+.. currentmodule:: odl.trafos.fourier
+
+.. autoattribute:: DiscreteFourierTransform.adjoint

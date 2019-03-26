@@ -1,0 +1,6 @@
+FunctionalRightVectorMult.grad_lipschitz
+==========================================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalRightVectorMult.grad_lipschitz

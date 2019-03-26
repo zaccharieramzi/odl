@@ -1,0 +1,6 @@
+FanBeamGeometry.motion_partition
+===========================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: FanBeamGeometry.motion_partition

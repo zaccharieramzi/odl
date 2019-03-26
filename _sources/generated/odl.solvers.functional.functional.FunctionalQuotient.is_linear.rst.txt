@@ -1,0 +1,6 @@
+FunctionalQuotient.is_linear
+==============================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalQuotient.is_linear

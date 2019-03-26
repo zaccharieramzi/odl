@@ -1,0 +1,6 @@
+NumpyTensorSpaceCustomInner.repr_part
+===========================================================
+
+.. currentmodule:: odl.space.npy_tensors
+
+.. autoattribute:: NumpyTensorSpaceCustomInner.repr_part

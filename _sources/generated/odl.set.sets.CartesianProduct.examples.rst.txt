@@ -1,0 +1,6 @@
+CartesianProduct.examples
+======================================
+
+.. currentmodule:: odl.set.sets
+
+.. autoattribute:: CartesianProduct.examples

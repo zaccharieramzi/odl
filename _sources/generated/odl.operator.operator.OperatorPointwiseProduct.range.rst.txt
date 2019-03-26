@@ -1,0 +1,6 @@
+OperatorPointwiseProduct.range
+====================================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorPointwiseProduct.range

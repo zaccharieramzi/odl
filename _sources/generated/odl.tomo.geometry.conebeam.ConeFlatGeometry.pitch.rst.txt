@@ -1,0 +1,6 @@
+ConeFlatGeometry.pitch
+=================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: ConeFlatGeometry.pitch

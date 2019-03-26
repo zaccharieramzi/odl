@@ -1,0 +1,6 @@
+DiscreteFourierTransformBase.impl
+====================================================
+
+.. currentmodule:: odl.trafos.fourier
+
+.. autoattribute:: DiscreteFourierTransformBase.impl

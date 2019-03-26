@@ -1,0 +1,6 @@
+Gradient.is_linear
+=====================================
+
+.. currentmodule:: odl.discr.diff_ops
+
+.. autoattribute:: Gradient.is_linear

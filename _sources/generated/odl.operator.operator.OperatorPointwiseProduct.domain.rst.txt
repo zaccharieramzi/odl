@@ -1,0 +1,6 @@
+OperatorPointwiseProduct.domain
+=====================================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorPointwiseProduct.domain

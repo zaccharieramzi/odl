@@ -1,0 +1,6 @@
+PointwiseInnerBase.adjoint
+==================================================
+
+.. currentmodule:: odl.operator.tensor_ops
+
+.. autoattribute:: PointwiseInnerBase.adjoint

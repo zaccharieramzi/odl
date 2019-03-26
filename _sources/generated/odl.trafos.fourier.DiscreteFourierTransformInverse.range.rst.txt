@@ -1,0 +1,6 @@
+DiscreteFourierTransformInverse.range
+========================================================
+
+.. currentmodule:: odl.trafos.fourier
+
+.. autoattribute:: DiscreteFourierTransformInverse.range

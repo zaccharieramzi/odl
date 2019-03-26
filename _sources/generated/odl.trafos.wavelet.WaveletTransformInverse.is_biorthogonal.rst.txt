@@ -1,0 +1,6 @@
+WaveletTransformInverse.is_biorthogonal
+==========================================================
+
+.. currentmodule:: odl.trafos.wavelet
+
+.. autoattribute:: WaveletTransformInverse.is_biorthogonal

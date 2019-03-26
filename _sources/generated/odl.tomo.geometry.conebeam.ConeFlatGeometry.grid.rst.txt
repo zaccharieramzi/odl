@@ -1,0 +1,6 @@
+ConeFlatGeometry.grid
+================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: ConeFlatGeometry.grid

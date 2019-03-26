@@ -1,0 +1,6 @@
+floor_func.proximal
+===========================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: floor_func.proximal

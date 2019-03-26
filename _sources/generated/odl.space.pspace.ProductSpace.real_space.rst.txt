@@ -1,0 +1,6 @@
+ProductSpace.real_space
+========================================
+
+.. currentmodule:: odl.space.pspace
+
+.. autoattribute:: ProductSpace.real_space

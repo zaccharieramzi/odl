@@ -1,0 +1,6 @@
+OperatorRightScalarMult.range
+===================================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorRightScalarMult.range

@@ -1,0 +1,6 @@
+DivergentBeamGeometry.det_grid
+=========================================================
+
+.. currentmodule:: odl.tomo.geometry.geometry
+
+.. autoattribute:: DivergentBeamGeometry.det_grid

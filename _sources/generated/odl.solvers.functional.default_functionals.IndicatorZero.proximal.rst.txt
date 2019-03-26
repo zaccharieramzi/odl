@@ -1,0 +1,6 @@
+IndicatorZero.proximal
+=================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: IndicatorZero.proximal

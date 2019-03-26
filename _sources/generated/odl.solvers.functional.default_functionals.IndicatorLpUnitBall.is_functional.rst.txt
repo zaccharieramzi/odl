@@ -1,0 +1,6 @@
+IndicatorLpUnitBall.is_functional
+============================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: IndicatorLpUnitBall.is_functional

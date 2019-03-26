@@ -1,0 +1,6 @@
+FunctionalQuotient.convex_conj
+================================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalQuotient.convex_conj

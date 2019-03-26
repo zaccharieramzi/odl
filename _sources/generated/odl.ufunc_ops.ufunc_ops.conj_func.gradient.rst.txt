@@ -1,0 +1,6 @@
+conj_func.gradient
+==========================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: conj_func.gradient

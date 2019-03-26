@@ -1,0 +1,6 @@
+ReductionOperator.prod_op
+=================================================
+
+.. currentmodule:: odl.operator.pspace_ops
+
+.. autoattribute:: ReductionOperator.prod_op

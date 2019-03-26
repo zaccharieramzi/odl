@@ -1,0 +1,6 @@
+cos_func.inverse
+========================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: cos_func.inverse

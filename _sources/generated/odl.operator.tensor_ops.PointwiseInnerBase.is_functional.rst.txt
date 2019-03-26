@@ -1,0 +1,6 @@
+PointwiseInnerBase.is_functional
+========================================================
+
+.. currentmodule:: odl.operator.tensor_ops
+
+.. autoattribute:: PointwiseInnerBase.is_functional

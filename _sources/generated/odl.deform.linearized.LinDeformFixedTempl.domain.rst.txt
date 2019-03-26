@@ -1,0 +1,6 @@
+LinDeformFixedTempl.domain
+================================================
+
+.. currentmodule:: odl.deform.linearized
+
+.. autoattribute:: LinDeformFixedTempl.domain

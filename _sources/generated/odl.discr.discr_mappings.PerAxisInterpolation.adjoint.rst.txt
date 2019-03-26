@@ -1,0 +1,6 @@
+PerAxisInterpolation.adjoint
+=====================================================
+
+.. currentmodule:: odl.discr.discr_mappings
+
+.. autoattribute:: PerAxisInterpolation.adjoint

@@ -1,0 +1,6 @@
+SetIntersection.sets
+=================================
+
+.. currentmodule:: odl.set.sets
+
+.. autoattribute:: SetIntersection.sets

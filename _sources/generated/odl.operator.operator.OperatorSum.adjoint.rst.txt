@@ -1,0 +1,6 @@
+OperatorSum.adjoint
+=========================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorSum.adjoint

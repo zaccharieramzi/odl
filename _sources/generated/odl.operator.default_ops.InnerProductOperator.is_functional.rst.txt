@@ -1,0 +1,6 @@
+InnerProductOperator.is_functional
+===========================================================
+
+.. currentmodule:: odl.operator.default_ops
+
+.. autoattribute:: InnerProductOperator.is_functional

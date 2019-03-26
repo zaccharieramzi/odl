@@ -1,0 +1,6 @@
+PointwiseTensorFieldOperator.adjoint
+============================================================
+
+.. currentmodule:: odl.operator.tensor_ops
+
+.. autoattribute:: PointwiseTensorFieldOperator.adjoint

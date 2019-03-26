@@ -1,0 +1,6 @@
+ComponentProjectionAdjoint.inverse
+==========================================================
+
+.. currentmodule:: odl.operator.pspace_ops
+
+.. autoattribute:: ComponentProjectionAdjoint.inverse

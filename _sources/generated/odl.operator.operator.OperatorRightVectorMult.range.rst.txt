@@ -1,0 +1,6 @@
+OperatorRightVectorMult.range
+===================================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorRightVectorMult.range

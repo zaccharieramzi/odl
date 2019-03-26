@@ -1,0 +1,6 @@
+MultiplyOperator.is_functional
+=======================================================
+
+.. currentmodule:: odl.operator.default_ops
+
+.. autoattribute:: MultiplyOperator.is_functional

@@ -1,0 +1,6 @@
+ConstantFunctional.grad_lipschitz
+============================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: ConstantFunctional.grad_lipschitz

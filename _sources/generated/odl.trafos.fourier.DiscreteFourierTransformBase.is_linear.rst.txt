@@ -1,0 +1,6 @@
+DiscreteFourierTransformBase.is_linear
+=========================================================
+
+.. currentmodule:: odl.trafos.fourier
+
+.. autoattribute:: DiscreteFourierTransformBase.is_linear

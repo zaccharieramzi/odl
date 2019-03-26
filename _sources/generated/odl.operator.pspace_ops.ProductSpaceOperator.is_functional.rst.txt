@@ -1,0 +1,6 @@
+ProductSpaceOperator.is_functional
+==========================================================
+
+.. currentmodule:: odl.operator.pspace_ops
+
+.. autoattribute:: ProductSpaceOperator.is_functional

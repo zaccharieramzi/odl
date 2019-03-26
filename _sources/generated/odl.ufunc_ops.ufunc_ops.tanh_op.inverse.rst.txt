@@ -1,0 +1,6 @@
+tanh_op.inverse
+=======================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: tanh_op.inverse

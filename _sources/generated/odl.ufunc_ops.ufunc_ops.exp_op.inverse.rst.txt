@@ -1,0 +1,6 @@
+exp_op.inverse
+======================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: exp_op.inverse

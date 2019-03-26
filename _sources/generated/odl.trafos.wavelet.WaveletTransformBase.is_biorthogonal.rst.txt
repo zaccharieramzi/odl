@@ -1,0 +1,6 @@
+WaveletTransformBase.is_biorthogonal
+=======================================================
+
+.. currentmodule:: odl.trafos.wavelet
+
+.. autoattribute:: WaveletTransformBase.is_biorthogonal

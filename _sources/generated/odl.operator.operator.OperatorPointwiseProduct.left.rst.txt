@@ -1,0 +1,6 @@
+OperatorPointwiseProduct.left
+===================================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorPointwiseProduct.left

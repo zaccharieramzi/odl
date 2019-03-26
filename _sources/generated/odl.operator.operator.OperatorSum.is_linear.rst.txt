@@ -1,0 +1,6 @@
+OperatorSum.is_linear
+===========================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorSum.is_linear

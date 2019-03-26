@@ -1,0 +1,6 @@
+KullbackLeiblerCrossEntropyConvexConj.grad_lipschitz
+===============================================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: KullbackLeiblerCrossEntropyConvexConj.grad_lipschitz

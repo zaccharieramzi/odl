@@ -1,0 +1,6 @@
+DiscreteLp.tangent_bundle
+============================================
+
+.. currentmodule:: odl.discr.lp_discr
+
+.. autoattribute:: DiscreteLp.tangent_bundle

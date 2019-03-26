@@ -1,0 +1,6 @@
+ParallelHoleCollimatorGeometry.motion_params
+====================================================================
+
+.. currentmodule:: odl.tomo.geometry.spect
+
+.. autoattribute:: ParallelHoleCollimatorGeometry.motion_params

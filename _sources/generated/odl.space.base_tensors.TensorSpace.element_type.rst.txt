@@ -1,0 +1,6 @@
+TensorSpace.element_type
+===============================================
+
+.. currentmodule:: odl.space.base_tensors
+
+.. autoattribute:: TensorSpace.element_type

@@ -1,0 +1,6 @@
+NumericalDerivative.is_functional
+====================================================================
+
+.. currentmodule:: odl.solvers.functional.derivatives
+
+.. autoattribute:: NumericalDerivative.is_functional

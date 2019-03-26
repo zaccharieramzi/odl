@@ -1,0 +1,6 @@
+WeightedSumSamplingOperator.sampling_points
+===================================================================
+
+.. currentmodule:: odl.operator.tensor_ops
+
+.. autoattribute:: WeightedSumSamplingOperator.sampling_points

@@ -1,0 +1,6 @@
+UniversalSpace.element_type
+=========================================
+
+.. currentmodule:: odl.set.space
+
+.. autoattribute:: UniversalSpace.element_type

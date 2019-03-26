@@ -1,0 +1,6 @@
+OperatorRightVectorMult.inverse
+=====================================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorRightVectorMult.inverse

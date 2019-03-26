@@ -1,0 +1,6 @@
+DiscreteLp.tspace_type
+=========================================
+
+.. currentmodule:: odl.discr.lp_discr
+
+.. autoattribute:: DiscreteLp.tspace_type

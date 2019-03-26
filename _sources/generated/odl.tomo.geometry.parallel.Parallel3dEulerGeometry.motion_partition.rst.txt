@@ -1,0 +1,6 @@
+Parallel3dEulerGeometry.motion_partition
+===================================================================
+
+.. currentmodule:: odl.tomo.geometry.parallel
+
+.. autoattribute:: Parallel3dEulerGeometry.motion_partition

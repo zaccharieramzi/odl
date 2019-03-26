@@ -1,0 +1,6 @@
+FunctionalTranslation.grad_lipschitz
+======================================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalTranslation.grad_lipschitz

@@ -1,0 +1,6 @@
+ConeFlatGeometry.check_bounds
+========================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: ConeFlatGeometry.check_bounds

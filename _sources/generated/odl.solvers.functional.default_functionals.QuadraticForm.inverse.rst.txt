@@ -1,0 +1,6 @@
+QuadraticForm.inverse
+================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: QuadraticForm.inverse

@@ -1,0 +1,6 @@
+Flat1dDetector.axis
+==============================================
+
+.. currentmodule:: odl.tomo.geometry.detector
+
+.. autoattribute:: Flat1dDetector.axis

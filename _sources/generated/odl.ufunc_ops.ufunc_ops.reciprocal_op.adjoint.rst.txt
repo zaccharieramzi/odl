@@ -1,0 +1,6 @@
+reciprocal_op.adjoint
+=============================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: reciprocal_op.adjoint

@@ -1,0 +1,6 @@
+FlatteningOperator.domain
+=================================================
+
+.. currentmodule:: odl.operator.tensor_ops
+
+.. autoattribute:: FlatteningOperator.domain

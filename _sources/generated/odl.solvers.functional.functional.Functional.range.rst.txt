@@ -1,0 +1,6 @@
+Functional.range
+==================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: Functional.range

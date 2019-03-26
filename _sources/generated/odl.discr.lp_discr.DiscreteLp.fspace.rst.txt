@@ -1,0 +1,6 @@
+DiscreteLp.fspace
+====================================
+
+.. currentmodule:: odl.discr.lp_discr
+
+.. autoattribute:: DiscreteLp.fspace

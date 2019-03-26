@@ -1,0 +1,6 @@
+FunctionalTranslation.domain
+==============================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalTranslation.domain

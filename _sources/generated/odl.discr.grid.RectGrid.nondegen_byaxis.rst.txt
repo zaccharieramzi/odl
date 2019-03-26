@@ -1,0 +1,6 @@
+RectGrid.nondegen_byaxis
+=======================================
+
+.. currentmodule:: odl.discr.grid
+
+.. autoattribute:: RectGrid.nondegen_byaxis

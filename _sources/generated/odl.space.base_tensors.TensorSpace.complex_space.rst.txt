@@ -1,0 +1,6 @@
+TensorSpace.complex_space
+================================================
+
+.. currentmodule:: odl.space.base_tensors
+
+.. autoattribute:: TensorSpace.complex_space

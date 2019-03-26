@@ -1,0 +1,6 @@
+KullbackLeiblerCrossEntropyConvexConj.proximal
+=========================================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: KullbackLeiblerCrossEntropyConvexConj.proximal

@@ -1,0 +1,6 @@
+DiscreteFourierTransform.sign
+================================================
+
+.. currentmodule:: odl.trafos.fourier
+
+.. autoattribute:: DiscreteFourierTransform.sign

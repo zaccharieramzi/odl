@@ -1,0 +1,6 @@
+BregmanDistance.convex_conj
+=============================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: BregmanDistance.convex_conj

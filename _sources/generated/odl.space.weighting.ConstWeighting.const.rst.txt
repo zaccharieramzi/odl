@@ -1,0 +1,6 @@
+ConstWeighting.const
+========================================
+
+.. currentmodule:: odl.space.weighting
+
+.. autoattribute:: ConstWeighting.const

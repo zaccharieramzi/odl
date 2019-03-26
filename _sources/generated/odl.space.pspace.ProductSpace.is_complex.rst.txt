@@ -1,0 +1,6 @@
+ProductSpace.is_complex
+========================================
+
+.. currentmodule:: odl.space.pspace
+
+.. autoattribute:: ProductSpace.is_complex

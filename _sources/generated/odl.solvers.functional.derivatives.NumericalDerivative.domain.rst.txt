@@ -1,0 +1,6 @@
+NumericalDerivative.domain
+=============================================================
+
+.. currentmodule:: odl.solvers.functional.derivatives
+
+.. autoattribute:: NumericalDerivative.domain

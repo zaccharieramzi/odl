@@ -1,0 +1,6 @@
+IndicatorGroupL1UnitBall.domain
+==========================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: IndicatorGroupL1UnitBall.domain

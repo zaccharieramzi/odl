@@ -1,0 +1,6 @@
+expm1_func.convex_conj
+==============================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: expm1_func.convex_conj

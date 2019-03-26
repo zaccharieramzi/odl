@@ -1,0 +1,6 @@
+ConeFlatGeometry.implementation_cache
+================================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: ConeFlatGeometry.implementation_cache

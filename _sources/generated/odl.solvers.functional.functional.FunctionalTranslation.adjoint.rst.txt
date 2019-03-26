@@ -1,0 +1,6 @@
+FunctionalTranslation.adjoint
+===============================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalTranslation.adjoint

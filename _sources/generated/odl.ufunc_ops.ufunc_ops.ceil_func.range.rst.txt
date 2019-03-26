@@ -1,0 +1,6 @@
+ceil_func.range
+=======================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: ceil_func.range

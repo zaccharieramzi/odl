@@ -1,0 +1,6 @@
+IndicatorGroupL1UnitBall.grad_lipschitz
+==================================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: IndicatorGroupL1UnitBall.grad_lipschitz

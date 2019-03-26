@@ -1,0 +1,6 @@
+ComplexModulus.is_linear
+=================================================
+
+.. currentmodule:: odl.operator.default_ops
+
+.. autoattribute:: ComplexModulus.is_linear

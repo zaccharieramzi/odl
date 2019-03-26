@@ -1,0 +1,6 @@
+FiniteSet.examples
+===============================
+
+.. currentmodule:: odl.set.sets
+
+.. autoattribute:: FiniteSet.examples

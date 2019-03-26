@@ -1,0 +1,6 @@
+DiscreteFourierTransformBase.axes
+====================================================
+
+.. currentmodule:: odl.trafos.fourier
+
+.. autoattribute:: DiscreteFourierTransformBase.axes

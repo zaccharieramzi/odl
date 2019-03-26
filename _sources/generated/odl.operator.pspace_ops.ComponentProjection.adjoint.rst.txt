@@ -1,0 +1,6 @@
+ComponentProjection.adjoint
+===================================================
+
+.. currentmodule:: odl.operator.pspace_ops
+
+.. autoattribute:: ComponentProjection.adjoint

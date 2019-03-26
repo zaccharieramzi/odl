@@ -1,0 +1,6 @@
+ComplexModulusSquared.is_functional
+============================================================
+
+.. currentmodule:: odl.operator.default_ops
+
+.. autoattribute:: ComplexModulusSquared.is_functional

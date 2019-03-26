@@ -1,0 +1,6 @@
+Geometry.check_bounds
+================================================
+
+.. currentmodule:: odl.tomo.geometry.geometry
+
+.. autoattribute:: Geometry.check_bounds

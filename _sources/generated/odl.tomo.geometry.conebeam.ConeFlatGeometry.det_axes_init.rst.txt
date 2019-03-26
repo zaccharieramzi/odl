@@ -1,0 +1,6 @@
+ConeFlatGeometry.det_axes_init
+=========================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: ConeFlatGeometry.det_axes_init

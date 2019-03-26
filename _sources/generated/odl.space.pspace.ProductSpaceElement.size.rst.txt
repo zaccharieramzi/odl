@@ -1,0 +1,6 @@
+ProductSpaceElement.size
+=========================================
+
+.. currentmodule:: odl.space.pspace
+
+.. autoattribute:: ProductSpaceElement.size

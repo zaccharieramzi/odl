@@ -1,0 +1,6 @@
+DiscreteLp.ndim
+==================================
+
+.. currentmodule:: odl.discr.lp_discr
+
+.. autoattribute:: DiscreteLp.ndim

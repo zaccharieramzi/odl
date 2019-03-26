@@ -1,0 +1,6 @@
+FunctionalSum.is_functional
+=============================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalSum.is_functional

@@ -1,0 +1,6 @@
+Detector.ndim
+========================================
+
+.. currentmodule:: odl.tomo.geometry.detector
+
+.. autoattribute:: Detector.ndim

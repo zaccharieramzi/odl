@@ -1,0 +1,6 @@
+L2NormSquared.convex_conj
+====================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: L2NormSquared.convex_conj

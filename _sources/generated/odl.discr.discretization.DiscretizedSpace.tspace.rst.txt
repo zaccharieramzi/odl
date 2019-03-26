@@ -1,0 +1,6 @@
+DiscretizedSpace.tspace
+================================================
+
+.. currentmodule:: odl.discr.discretization
+
+.. autoattribute:: DiscretizedSpace.tspace

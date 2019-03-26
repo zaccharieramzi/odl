@@ -1,0 +1,6 @@
+BroadcastOperator.prod_op
+=================================================
+
+.. currentmodule:: odl.operator.pspace_ops
+
+.. autoattribute:: BroadcastOperator.prod_op

@@ -1,0 +1,6 @@
+ConeFlatGeometry.motion_params
+=========================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: ConeFlatGeometry.motion_params

@@ -1,0 +1,6 @@
+DiscreteLp.is_uniform_byaxis
+===============================================
+
+.. currentmodule:: odl.discr.lp_discr
+
+.. autoattribute:: DiscreteLp.is_uniform_byaxis

@@ -1,0 +1,6 @@
+ConeFlatGeometry.det_radius
+======================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: ConeFlatGeometry.det_radius

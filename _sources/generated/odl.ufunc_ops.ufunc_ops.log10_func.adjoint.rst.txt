@@ -1,0 +1,6 @@
+log10_func.adjoint
+==========================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: log10_func.adjoint

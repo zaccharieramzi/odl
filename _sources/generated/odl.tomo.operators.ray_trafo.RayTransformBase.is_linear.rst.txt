@@ -1,0 +1,6 @@
+RayTransformBase.is_linear
+=======================================================
+
+.. currentmodule:: odl.tomo.operators.ray_trafo
+
+.. autoattribute:: RayTransformBase.is_linear

@@ -1,0 +1,6 @@
+IntervalProd.min_pt
+==================================
+
+.. currentmodule:: odl.set.domain
+
+.. autoattribute:: IntervalProd.min_pt

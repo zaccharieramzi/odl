@@ -1,0 +1,6 @@
+OperatorComp.range
+========================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorComp.range

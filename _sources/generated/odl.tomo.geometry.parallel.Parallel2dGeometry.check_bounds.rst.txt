@@ -1,0 +1,6 @@
+Parallel2dGeometry.check_bounds
+==========================================================
+
+.. currentmodule:: odl.tomo.geometry.parallel
+
+.. autoattribute:: Parallel2dGeometry.check_bounds

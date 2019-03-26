@@ -1,0 +1,6 @@
+FunctionalRightVectorMult.is_linear
+=====================================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalRightVectorMult.is_linear

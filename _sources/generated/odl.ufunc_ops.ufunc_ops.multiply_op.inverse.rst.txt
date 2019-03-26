@@ -1,0 +1,6 @@
+multiply_op.inverse
+===========================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: multiply_op.inverse

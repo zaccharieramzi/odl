@@ -1,0 +1,6 @@
+Functional.is_functional
+==========================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: Functional.is_functional

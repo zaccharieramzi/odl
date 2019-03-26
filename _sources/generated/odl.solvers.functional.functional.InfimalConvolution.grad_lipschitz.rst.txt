@@ -1,0 +1,6 @@
+InfimalConvolution.grad_lipschitz
+===================================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: InfimalConvolution.grad_lipschitz

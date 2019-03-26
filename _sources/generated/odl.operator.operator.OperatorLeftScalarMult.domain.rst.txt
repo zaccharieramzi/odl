@@ -1,0 +1,6 @@
+OperatorLeftScalarMult.domain
+===================================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorLeftScalarMult.domain

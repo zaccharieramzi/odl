@@ -1,0 +1,6 @@
+DiscreteLp.is_real
+=====================================
+
+.. currentmodule:: odl.discr.lp_discr
+
+.. autoattribute:: DiscreteLp.is_real

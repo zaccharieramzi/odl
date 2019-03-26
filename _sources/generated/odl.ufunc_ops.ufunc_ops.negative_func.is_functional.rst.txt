@@ -1,0 +1,6 @@
+negative_func.is_functional
+===================================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: negative_func.is_functional

@@ -1,0 +1,6 @@
+SeparableSum.convex_conj
+===================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: SeparableSum.convex_conj

@@ -1,0 +1,6 @@
+Parallel2dGeometry.implementation_cache
+==================================================================
+
+.. currentmodule:: odl.tomo.geometry.parallel
+
+.. autoattribute:: Parallel2dGeometry.implementation_cache

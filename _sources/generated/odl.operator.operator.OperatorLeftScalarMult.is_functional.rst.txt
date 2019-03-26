@@ -1,0 +1,6 @@
+OperatorLeftScalarMult.is_functional
+==========================================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorLeftScalarMult.is_functional

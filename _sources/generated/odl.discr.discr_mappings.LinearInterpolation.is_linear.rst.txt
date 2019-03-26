@@ -1,0 +1,6 @@
+LinearInterpolation.is_linear
+======================================================
+
+.. currentmodule:: odl.discr.discr_mappings
+
+.. autoattribute:: LinearInterpolation.is_linear

@@ -1,0 +1,6 @@
+IntervalProd.area
+================================
+
+.. currentmodule:: odl.set.domain
+
+.. autoattribute:: IntervalProd.area

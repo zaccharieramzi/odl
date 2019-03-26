@@ -1,0 +1,6 @@
+DiscreteLp.is_complex
+========================================
+
+.. currentmodule:: odl.discr.lp_discr
+
+.. autoattribute:: DiscreteLp.is_complex

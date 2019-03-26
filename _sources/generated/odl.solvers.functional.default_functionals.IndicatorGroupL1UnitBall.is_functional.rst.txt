@@ -1,0 +1,6 @@
+IndicatorGroupL1UnitBall.is_functional
+=================================================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: IndicatorGroupL1UnitBall.is_functional

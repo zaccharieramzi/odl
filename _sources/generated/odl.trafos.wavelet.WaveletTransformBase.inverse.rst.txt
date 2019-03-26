@@ -1,0 +1,6 @@
+WaveletTransformBase.inverse
+===============================================
+
+.. currentmodule:: odl.trafos.wavelet
+
+.. autoattribute:: WaveletTransformBase.inverse

@@ -1,0 +1,6 @@
+OperatorComp.left
+=======================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorComp.left

@@ -1,0 +1,6 @@
+GroupL1Norm.range
+============================================================
+
+.. currentmodule:: odl.solvers.functional.default_functionals
+
+.. autoattribute:: GroupL1Norm.range

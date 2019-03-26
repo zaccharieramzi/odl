@@ -1,0 +1,6 @@
+FunctionalLeftScalarMult.gradient
+===================================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalLeftScalarMult.gradient

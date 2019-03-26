@@ -1,0 +1,6 @@
+Operator.inverse
+======================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: Operator.inverse

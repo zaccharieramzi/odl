@@ -1,0 +1,6 @@
+PointwiseInnerBase.domain
+=================================================
+
+.. currentmodule:: odl.operator.tensor_ops
+
+.. autoattribute:: PointwiseInnerBase.domain

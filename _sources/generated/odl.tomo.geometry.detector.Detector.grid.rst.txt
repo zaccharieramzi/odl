@@ -1,0 +1,6 @@
+Detector.grid
+========================================
+
+.. currentmodule:: odl.tomo.geometry.detector
+
+.. autoattribute:: Detector.grid

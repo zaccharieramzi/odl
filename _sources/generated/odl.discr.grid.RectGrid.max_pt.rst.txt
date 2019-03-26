@@ -1,0 +1,6 @@
+RectGrid.max_pt
+==============================
+
+.. currentmodule:: odl.discr.grid
+
+.. autoattribute:: RectGrid.max_pt

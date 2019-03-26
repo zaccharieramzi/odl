@@ -1,0 +1,6 @@
+OperatorRightScalarMult.is_functional
+===========================================================
+
+.. currentmodule:: odl.operator.operator
+
+.. autoattribute:: OperatorRightScalarMult.is_functional

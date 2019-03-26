@@ -1,0 +1,6 @@
+ConeFlatGeometry.ndim
+================================================
+
+.. currentmodule:: odl.tomo.geometry.conebeam
+
+.. autoattribute:: ConeFlatGeometry.ndim

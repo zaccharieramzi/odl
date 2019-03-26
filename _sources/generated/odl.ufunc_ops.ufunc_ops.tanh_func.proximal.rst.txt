@@ -1,0 +1,6 @@
+tanh_func.proximal
+==========================================
+
+.. currentmodule:: odl.ufunc_ops.ufunc_ops
+
+.. autoattribute:: tanh_func.proximal

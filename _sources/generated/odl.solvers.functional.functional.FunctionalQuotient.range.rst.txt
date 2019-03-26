@@ -1,0 +1,6 @@
+FunctionalQuotient.range
+==========================================================
+
+.. currentmodule:: odl.solvers.functional.functional
+
+.. autoattribute:: FunctionalQuotient.range

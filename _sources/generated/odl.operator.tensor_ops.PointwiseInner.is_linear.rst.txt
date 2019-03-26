@@ -1,0 +1,6 @@
+PointwiseInner.is_linear
+================================================
+
+.. currentmodule:: odl.operator.tensor_ops
+
+.. autoattribute:: PointwiseInner.is_linear
